@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guitar Fretboard Trainer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .flash-success { animation: flashGreen 0.5s ease-out; }
+        .flash-fail { animation: flashRed 0.5s ease-out; }
+
+        @keyframes flashGreen {
+            0% { background-color: rgba(34, 197, 94, 0.8); }
+            100% { background-color: #111827; }
+        }
+        @keyframes flashRed {
+            0% { background-color: rgba(239, 68, 68, 0.8); }
+            100% { background-color: #111827; }
+        }
+        
+        /* Nascondi sezioni non attive */
+        .hidden-section { display: none; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
+
+    <header class="mb-8 text-center">
+        <h1 class="text-4xl font-bold text-indigo-500 mb-2">Guitar Fretboard Trainer</h1>
+        <p class="text-gray-400">Allena il tuo orecchio e la conoscenza della tastiera</p>
+    </header>
+
+    <div id="settings-panel" class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700">
+        <h2 class="text-2xl font-semibold mb-6 border-b border-gray-600 pb-2">Configurazione Sessione</h2>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">Numero di Test</label>
+                <input type="number" id="numTests" value="20" class="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Tasto Start (0-11)</label>
+                    <input type="number" id="fretStart" value="0" min="0" max="11" class="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Tasto End (0-11)</label>
+                    <input type="number" id="fretEnd" value="11" min="0" max="11" class="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">Scala</label>
+                <select id="scaleType" class="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <option value="diatonic" selected>Diatonica (Do Maggiore)</option>
+                    <option value="chromatic">Cromatica (Tutte le note)</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">Tempo per risposta (secondi)</label>
+                <input type="number" id="timeLimit" value="20" class="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+            </div>
+
+            <button onclick="startSession()" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded transition duration-200 shadow-lg">
+                AVVIA SESSIONE & ABILITA MICROFONO
+            </button>
+        </div>
+    </div>
+
+    <div id="game-panel" class="hidden-section w-full max-w-2xl flex flex-col items-center">
+        
+        <div class="w-full bg-gray-700 rounded-full h-2.5 mb-6">
+            <div id="progressBar" class="bg-indigo-500 h-2.5 rounded-full" style="width: 0%"></div>
+        </div>
+
+        <div class="bg-gray-800 p-10 rounded-3xl shadow-2xl border border-gray-600 w-full text-center relative overflow-hidden">
+            <div id="timerDisplay" class="absolute top-4 right-6 text-2xl font-mono text-yellow-400">20</div>
+            
+            <p class="text-gray-400 text-lg uppercase tracking-widest mb-2">Trova la nota</p>
+            <h2 id="questionText" class="text-6xl font-extrabold text-white mb-4">--</h2>
+            
+            <div class="mt-8 p-4 bg-gray-900 rounded-xl border border-gray-700 flex flex-col items-center">
+                <span class="text-xs text-gray-500 uppercase">Input Rilevato</span>
+                <div class="flex items-baseline space-x-3 mt-1">
+                    <span id="detectedNote" class="text-3xl font-bold text-indigo-400">--</span>
+                    <span id="detectedFreq" class="text-sm text-gray-500 font-mono">0 Hz</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="results-panel" class="hidden-section bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-3xl border border-gray-700">
+        <h2 class="text-3xl font-bold text-center mb-6">Sessione Completata</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="bg-gray-700 p-6 rounded-xl text-center">
+                <p class="text-gray-400 text-sm">Accuratezza</p>
+                <p id="resultAccuracy" class="text-4xl font-bold text-green-400">0%</p>
+            </div>
+            <div class="bg-gray-700 p-6 rounded-xl text-center">
+                <p class="text-gray-400 text-sm">Tempo Medio</p>
+                <p id="resultAvgTime" class="text-4xl font-bold text-blue-400">0s</p>
+            </div>
+        </div>
+
+        <div class="bg-gray-900 p-4 rounded-xl border border-gray-700 h-64">
+            <canvas id="statsChart"></canvas>
+        </div>
+
+        <button onclick="location.reload()" class="w-full mt-6 bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded transition duration-200">
+            Nuova Sessione
+        </button>
+    </div>
+
+    <script>
+        // --- DATA & CONFIG ---
+        const NOTES_IT = ["Do", "Do#", "Re", "Re#", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "La#", "Si"];
+        const STRINGS = [
+            { id: 1, baseMidi: 64, name: "Mi Cantino (1)" }, // E4
+            { id: 2, baseMidi: 59, name: "Si (2)" },         // B3
+            { id: 3, baseMidi: 55, name: "Sol (3)" },        // G3
+            { id: 4, baseMidi: 50, name: "Re (4)" },         // D3
+            { id: 5, baseMidi: 45, name: "La (5)" },         // A2
+            { id: 6, baseMidi: 40, name: "Mi Basso (6)" }    // E2
+        ];
+        
+        // --- APP STATE ---
+        let audioContext = null;
+        let analyser = null;
+        let microphoneStream = null;
+        let scriptProcessor = null;
+        let isListening = false;
+        
+        let config = {};
+        let session = {
+            tests: [],
+            currentTestIndex: 0,
+            correctCount: 0,
+            totalTime: 0,
+            timerInterval: null,
+            timeLeft: 0,
+            startTime: 0,
+            activeNote: null // { name:Str, freq:Num, stringIdx:Num }
+        };
+
+        // --- AUDIO ENGINE ---
+
+        // Pitch detection algorithm (Autocorrelation)
+        function autoCorrelate(buf, sampleRate) {
+            let SIZE = buf.length;
+            let rms = 0;
+
+            for (let i = 0; i < SIZE; i++) {
+                let val = buf[i];
+                rms += val * val;
+            }
+            rms = Math.sqrt(rms / SIZE);
+            if (rms < 0.01) return -1; // Segnale troppo debole (silenzio)
+
+            let r1 = 0, r2 = SIZE - 1, thres = 0.2;
+            for (let i = 0; i < SIZE / 2; i++)
+                if (Math.abs(buf[i]) < thres) { r1 = i; break; }
+            for (let i = 1; i < SIZE / 2; i++)
+                if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
+
+            buf = buf.slice(r1, r2);
+            SIZE = buf.length;
+
+            let c = new Array(SIZE).fill(0);
+            for (let i = 0; i < SIZE; i++)
+                for (let j = 0; j < SIZE - i; j++)
+                    c[i] = c[i] + buf[j] * buf[j + i];
+
+            let d = 0; while (c[d] > c[d + 1]) d++;
+            let maxval = -1, maxpos = -1;
+            for (let i = d; i < SIZE; i++) {
+                if (c[i] > maxval) {
+                    maxval = c[i];
+                    maxpos = i;
+                }
+            }
+            let T0 = maxpos;
+
+            // Interpolazione parabolica per maggiore precisione
+            let x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
+            let a = (x1 + x3 - 2 * x2) / 2;
+            let b = (x3 - x1) / 2;
+            if (a) T0 = T0 - b / (2 * a);
+
+            return sampleRate / T0;
+        }
+
+        function noteFromPitch(frequency) {
+            const noteNum = 12 * (Math.log(frequency / 440) / Math.log(2));
+            return Math.round(noteNum) + 69;
+        }
+
+        function frequencyFromNoteNumber(note) {
+            return 440 * Math.pow(2, (note - 69) / 12);
+        }
+
+        function getNoteName(midiNum) {
+            return NOTES_IT[midiNum % 12];
+        }
+
+        async function initAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                microphoneStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 2048;
+                
+                const source = audioContext.createMediaStreamSource(microphoneStream);
+                source.connect(analyser);
+                
+                requestAnimationFrame(updatePitch);
+            } catch (e) {
+                alert("Errore accesso microfono! Assicurati di usare HTTPS o localhost.");
+                console.error(e);
+            }
+        }
+
+        let pitchBuffer = []; // Per stabilizzare la lettura
+        
+        function updatePitch() {
+            if (!isListening) return;
+
+            const buf = new Float32Array(analyser.fftSize);
+            analyser.getFloatTimeDomainData(buf);
+            const freq = autoCorrelate(buf, audioContext.sampleRate);
+
+            const freqDisplay = document.getElementById("detectedFreq");
+            const noteDisplay = document.getElementById("detectedNote");
+
+            if (freq !== -1) {
+                const midiNum = noteFromPitch(freq);
+                const noteName = getNoteName(midiNum);
+                const standardFreq = frequencyFromNoteNumber(midiNum);
+                
+                // Visualizzazione
+                freqDisplay.innerText = Math.round(freq) + " Hz";
+                noteDisplay.innerText = noteName;
+
+                // LOGICA DI VERIFICA
+                if (session.activeNote) {
+                    // Tolleranza: controlliamo se siamo vicini alla frequenza target
+                    // O se il MIDI number corrisponde esattamente (che include l'ottava)
+                    // Il test chiede l'ottava specifica, quindi controlliamo il MIDI number
+                    
+                    if (midiNum === session.activeNote.midiVal) {
+                        // Per evitare falsi positivi istantanei, richiediamo stabilità
+                        pitchBuffer.push(midiNum);
+                        if (pitchBuffer.length > 5) { // circa 100ms di stabilità
+                           endTest(true);
+                        }
+                    } else {
+                        pitchBuffer = [];
+                    }
+                }
+            } else {
+                // Silenzio
+                pitchBuffer = [];
+            }
+
+            requestAnimationFrame(updatePitch);
+        }
+
+        // --- GAME LOGIC ---
+
+        function startSession() {
+            // Leggi input
+            config.numTests = parseInt(document.getElementById('numTests').value);
+            config.fretStart = parseInt(document.getElementById('fretStart').value);
+            config.fretEnd = parseInt(document.getElementById('fretEnd').value);
+            config.scaleType = document.getElementById('scaleType').value;
+            config.timeLimit = parseInt(document.getElementById('timeLimit').value);
+
+            if(config.fretStart > config.fretEnd) { alert("Il tasto di partenza deve essere minore di quello di arrivo"); return; }
+
+            // Switch UI
+            document.getElementById('settings-panel').classList.add('hidden-section');
+            document.getElementById('game-panel').classList.remove('hidden-section');
+            
+            initAudio();
+            isListening = true;
+            session.currentTestIndex = 0;
+            session.correctCount = 0;
+            session.totalTime = 0;
+            session.tests = [];
+
+            nextTest();
+        }
+
+        function nextTest() {
+            if (session.currentTestIndex >= config.numTests) {
+                finishSession();
+                return;
+            }
+
+            session.currentTestIndex++;
+            updateProgressBar();
+            
+            // Genera domanda
+            let valid = false;
+            let strObj, fret, midiVal, noteName;
+
+            while (!valid) {
+                strObj = STRINGS[Math.floor(Math.random() * STRINGS.length)];
+                fret = Math.floor(Math.random() * (config.fretEnd - config.fretStart + 1)) + config.fretStart;
+                midiVal = strObj.baseMidi + fret;
+                noteName = getNoteName(midiVal);
+
+                if (config.scaleType === 'diatonic') {
+                    // Scala di DO: no diesis/bemolli
+                    if (!noteName.includes('#')) valid = true;
+                } else {
+                    valid = true;
+                }
+            }
+
+            session.activeNote = { 
+                name: noteName, 
+                string: strObj.name, 
+                midiVal: midiVal, // Importante per l'ottava
+                stringId: strObj.id 
+            };
+
+            // UI
+            document.getElementById('questionText').innerHTML = `${noteName}<br><span class="text-2xl text-indigo-300 font-normal">Corda ${strObj.id}</span>`;
+            document.getElementById('detectedNote').innerText = "--";
+            document.getElementById('detectedFreq').innerText = "ASCOLTO...";
+            pitchBuffer = [];
+
+            // Vocalizza
+            speak(`Nota ${noteName}, corda ${strObj.id}`);
+
+            // Timer
+            session.timeLeft = config.timeLimit;
+            document.getElementById('timerDisplay').innerText = session.timeLeft;
+            session.startTime = Date.now();
+
+            if (session.timerInterval) clearInterval(session.timerInterval);
+            session.timerInterval = setInterval(() => {
+                session.timeLeft--;
+                document.getElementById('timerDisplay').innerText = session.timeLeft;
+                if (session.timeLeft <= 0) {
+                    endTest(false);
+                }
+            }, 1000);
+        }
+
+        function endTest(success) {
+            clearInterval(session.timerInterval);
+            const timeTaken = (Date.now() - session.startTime) / 1000;
+            session.totalTime += Math.min(timeTaken, config.timeLimit);
+            
+            // Salva statistiche parziali
+            session.tests.push({
+                note: session.activeNote.name,
+                success: success,
+                time: timeTaken
+            });
+
+            if (success) {
+                session.correctCount++;
+                document.body.classList.add('flash-success');
+                // Suono di successo (opzionale, piccolo beep)
+                speak("Bravo");
+            } else {
+                document.body.classList.add('flash-fail');
+                speak("Sbagliato");
+            }
+
+            session.activeNote = null; // Stop matching
+
+            setTimeout(() => {
+                document.body.classList.remove('flash-success');
+                document.body.classList.remove('flash-fail');
+                nextTest();
+            }, 1500); // Pausa tra le domande
+        }
+
+        function updateProgressBar() {
+            const pct = ((session.currentTestIndex - 1) / config.numTests) * 100;
+            document.getElementById('progressBar').style.width = `${pct}%`;
+        }
+
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                const utter = new SpeechSynthesisUtterance(text);
+                utter.lang = 'it-IT';
+                utter.rate = 1.1;
+                window.speechSynthesis.speak(utter);
+            }
+        }
+
+        function finishSession() {
+            isListening = false;
+            document.getElementById('game-panel').classList.add('hidden-section');
+            document.getElementById('results-panel').classList.remove('hidden-section');
+
+            // Calcolo Statistiche
+            const accuracy = Math.round((session.correctCount / config.numTests) * 100);
+            const avgTime = (session.totalTime / config.numTests).toFixed(1);
+
+            document.getElementById('resultAccuracy').innerText = `${accuracy}%`;
+            document.getElementById('resultAvgTime').innerText = `${avgTime}s`;
+
+            renderChart();
+        }
+
+        function renderChart() {
+            // Aggrega dati per nota
+            let noteStats = {};
+            NOTES_IT.forEach(n => noteStats[n] = { correct: 0, total: 0 });
+
+            session.tests.forEach(t => {
+                // Rimuovi ottava per statistica generica se necessario, qui usiamo nome nota
+                if(noteStats[t.note]) {
+                    noteStats[t.note].total++;
+                    if(t.success) noteStats[t.note].correct++;
+                }
+            });
+
+            // Filtra solo note usate
+            const labels = Object.keys(noteStats).filter(n => noteStats[n].total > 0);
+            const data = labels.map(n => (noteStats[n].correct / noteStats[n].total) * 100);
+
+            const ctx = document.getElementById('statsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '% Successo per Nota',
+                        data: data,
+                        backgroundColor: data.map(v => v >= 80 ? '#4ade80' : (v >= 50 ? '#facc15' : '#f87171')),
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, max: 100, grid: { color: '#374151' } },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
