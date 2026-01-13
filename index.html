@@ -91,6 +91,13 @@
                     <span id="detectedFreq" class="text-sm text-gray-500 font-mono">0 Hz</span>
                 </div>
             </div>
+
+            <button onclick="finishSession()" class="mt-8 text-gray-400 hover:text-red-400 text-sm font-medium transition-colors flex items-center justify-center mx-auto gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                INTERROMPI SESSIONE
+            </button>
         </div>
     </div>
 
@@ -133,7 +140,6 @@
         let audioContext = null;
         let analyser = null;
         let microphoneStream = null;
-        let scriptProcessor = null;
         let isListening = false;
         
         let config = {};
@@ -145,12 +151,36 @@
             timerInterval: null,
             timeLeft: 0,
             startTime: 0,
-            activeNote: null // { name:Str, freq:Num, stringIdx:Num }
+            activeNote: null
         };
+
+        // --- GESTIONE VOCE (FIX ALTA QUALITÀ) ---
+        let selectedVoice = null;
+        function loadVoices() {
+            const voices = window.speechSynthesis.getVoices();
+            selectedVoice = voices.find(v => v.lang.startsWith('it') && v.name.includes('Google')) ||
+                            voices.find(v => v.lang.startsWith('it') && v.name.includes('Natural')) ||
+                            voices.find(v => v.lang.startsWith('it'));
+        }
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = loadVoices;
+        }
+        loadVoices();
+
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utter = new SpeechSynthesisUtterance(text);
+                if (selectedVoice) utter.voice = selectedVoice;
+                utter.lang = 'it-IT';
+                utter.rate = 1.0; 
+                utter.pitch = 1.0;
+                window.speechSynthesis.speak(utter);
+            }
+        }
 
         // --- AUDIO ENGINE ---
 
-        // Pitch detection algorithm (Autocorrelation)
         function autoCorrelate(buf, sampleRate) {
             let SIZE = buf.length;
             let rms = 0;
@@ -160,7 +190,7 @@
                 rms += val * val;
             }
             rms = Math.sqrt(rms / SIZE);
-            if (rms < 0.01) return -1; // Segnale troppo debole (silenzio)
+            if (rms < 0.01) return -1;
 
             let r1 = 0, r2 = SIZE - 1, thres = 0.2;
             for (let i = 0; i < SIZE / 2; i++)
@@ -186,7 +216,6 @@
             }
             let T0 = maxpos;
 
-            // Interpolazione parabolica per maggiore precisione
             let x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
             let a = (x1 + x3 - 2 * x2) / 2;
             let b = (x3 - x1) / 2;
@@ -200,17 +229,15 @@
             return Math.round(noteNum) + 69;
         }
 
-        function frequencyFromNoteNumber(note) {
-            return 440 * Math.pow(2, (note - 69) / 12);
-        }
-
         function getNoteName(midiNum) {
             return NOTES_IT[midiNum % 12];
         }
 
         async function initAudio() {
             try {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
                 microphoneStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 
                 analyser = audioContext.createAnalyser();
@@ -226,7 +253,7 @@
             }
         }
 
-        let pitchBuffer = []; // Per stabilizzare la lettura
+        let pitchBuffer = []; 
         
         function updatePitch() {
             if (!isListening) return;
@@ -241,22 +268,14 @@
             if (freq !== -1) {
                 const midiNum = noteFromPitch(freq);
                 const noteName = getNoteName(midiNum);
-                const standardFreq = frequencyFromNoteNumber(midiNum);
                 
-                // Visualizzazione
                 freqDisplay.innerText = Math.round(freq) + " Hz";
                 noteDisplay.innerText = noteName;
 
-                // LOGICA DI VERIFICA
                 if (session.activeNote) {
-                    // Tolleranza: controlliamo se siamo vicini alla frequenza target
-                    // O se il MIDI number corrisponde esattamente (che include l'ottava)
-                    // Il test chiede l'ottava specifica, quindi controlliamo il MIDI number
-                    
                     if (midiNum === session.activeNote.midiVal) {
-                        // Per evitare falsi positivi istantanei, richiediamo stabilità
                         pitchBuffer.push(midiNum);
-                        if (pitchBuffer.length > 5) { // circa 100ms di stabilità
+                        if (pitchBuffer.length > 5) { 
                            endTest(true);
                         }
                     } else {
@@ -264,7 +283,6 @@
                     }
                 }
             } else {
-                // Silenzio
                 pitchBuffer = [];
             }
 
@@ -274,7 +292,6 @@
         // --- GAME LOGIC ---
 
         function startSession() {
-            // Leggi input
             config.numTests = parseInt(document.getElementById('numTests').value);
             config.fretStart = parseInt(document.getElementById('fretStart').value);
             config.fretEnd = parseInt(document.getElementById('fretEnd').value);
@@ -283,9 +300,9 @@
 
             if(config.fretStart > config.fretEnd) { alert("Il tasto di partenza deve essere minore di quello di arrivo"); return; }
 
-            // Switch UI
             document.getElementById('settings-panel').classList.add('hidden-section');
             document.getElementById('game-panel').classList.remove('hidden-section');
+            document.getElementById('results-panel').classList.add('hidden-section');
             
             initAudio();
             isListening = true;
@@ -306,7 +323,6 @@
             session.currentTestIndex++;
             updateProgressBar();
             
-            // Genera domanda
             let valid = false;
             let strObj, fret, midiVal, noteName;
 
@@ -317,7 +333,6 @@
                 noteName = getNoteName(midiVal);
 
                 if (config.scaleType === 'diatonic') {
-                    // Scala di DO: no diesis/bemolli
                     if (!noteName.includes('#')) valid = true;
                 } else {
                     valid = true;
@@ -327,20 +342,17 @@
             session.activeNote = { 
                 name: noteName, 
                 string: strObj.name, 
-                midiVal: midiVal, // Importante per l'ottava
+                midiVal: midiVal, 
                 stringId: strObj.id 
             };
 
-            // UI
             document.getElementById('questionText').innerHTML = `${noteName}<br><span class="text-2xl text-indigo-300 font-normal">Corda ${strObj.id}</span>`;
             document.getElementById('detectedNote').innerText = "--";
             document.getElementById('detectedFreq').innerText = "ASCOLTO...";
             pitchBuffer = [];
 
-            // Vocalizza
-            speak(`Nota ${noteName}, corda ${strObj.id}`);
+            speak(`${noteName}, corda ${strObj.id}`);
 
-            // Timer
             session.timeLeft = config.timeLimit;
             document.getElementById('timerDisplay').innerText = session.timeLeft;
             session.startTime = Date.now();
@@ -360,7 +372,6 @@
             const timeTaken = (Date.now() - session.startTime) / 1000;
             session.totalTime += Math.min(timeTaken, config.timeLimit);
             
-            // Salva statistiche parziali
             session.tests.push({
                 note: session.activeNote.name,
                 success: success,
@@ -370,20 +381,17 @@
             if (success) {
                 session.correctCount++;
                 document.body.classList.add('flash-success');
-                // Suono di successo (opzionale, piccolo beep)
-                speak("Bravo");
             } else {
                 document.body.classList.add('flash-fail');
-                speak("Sbagliato");
             }
 
-            session.activeNote = null; // Stop matching
+            session.activeNote = null; 
 
             setTimeout(() => {
                 document.body.classList.remove('flash-success');
                 document.body.classList.remove('flash-fail');
-                nextTest();
-            }, 1500); // Pausa tra le domande
+                if (isListening) nextTest();
+            }, 1500); 
         }
 
         function updateProgressBar() {
@@ -391,23 +399,19 @@
             document.getElementById('progressBar').style.width = `${pct}%`;
         }
 
-        function speak(text) {
-            if ('speechSynthesis' in window) {
-                const utter = new SpeechSynthesisUtterance(text);
-                utter.lang = 'it-IT';
-                utter.rate = 1.1;
-                window.speechSynthesis.speak(utter);
-            }
-        }
-
         function finishSession() {
             isListening = false;
+            clearInterval(session.timerInterval);
+            if (microphoneStream) {
+                microphoneStream.getTracks().forEach(track => track.stop());
+            }
+            
             document.getElementById('game-panel').classList.add('hidden-section');
             document.getElementById('results-panel').classList.remove('hidden-section');
 
-            // Calcolo Statistiche
-            const accuracy = Math.round((session.correctCount / config.numTests) * 100);
-            const avgTime = (session.totalTime / config.numTests).toFixed(1);
+            const totalConcluded = session.tests.length;
+            const accuracy = totalConcluded > 0 ? Math.round((session.correctCount / totalConcluded) * 100) : 0;
+            const avgTime = totalConcluded > 0 ? (session.totalTime / totalConcluded).toFixed(1) : 0;
 
             document.getElementById('resultAccuracy').innerText = `${accuracy}%`;
             document.getElementById('resultAvgTime').innerText = `${avgTime}s`;
@@ -416,23 +420,27 @@
         }
 
         function renderChart() {
-            // Aggrega dati per nota
             let noteStats = {};
             NOTES_IT.forEach(n => noteStats[n] = { correct: 0, total: 0 });
 
             session.tests.forEach(t => {
-                // Rimuovi ottava per statistica generica se necessario, qui usiamo nome nota
                 if(noteStats[t.note]) {
                     noteStats[t.note].total++;
                     if(t.success) noteStats[t.note].correct++;
                 }
             });
 
-            // Filtra solo note usate
             const labels = Object.keys(noteStats).filter(n => noteStats[n].total > 0);
             const data = labels.map(n => (noteStats[n].correct / noteStats[n].total) * 100);
 
             const ctx = document.getElementById('statsChart').getContext('2d');
+            
+            // Distruggi grafico precedente se esiste
+            const chartStatus = Chart.getChart("statsChart");
+            if (chartStatus !== undefined) {
+                chartStatus.destroy();
+            }
+
             new Chart(ctx, {
                 type: 'bar',
                 data: {
