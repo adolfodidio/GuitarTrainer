@@ -9,7 +9,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            overscroll-behavior: none;
+        }
         .flash-success { animation: flashGreen 0.5s ease-out; }
         .flash-fail { animation: flashRed 0.5s ease-out; }
 
@@ -22,121 +25,173 @@
             100% { background-color: #111827; }
         }
         
-        /* Nascondi sezioni non attive */
         .hidden-section { display: none; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 10px; }
+
+        .string-checkbox:checked + label {
+            background-color: #4f46e5;
+            border-color: #6366f1;
+            color: white;
+        }
     </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center p-4 sm:p-6">
 
-    <header class="mb-8 text-center">
-        <h1 class="text-4xl font-bold text-indigo-500 mb-2">Guitar Fretboard Trainer</h1>
-        <p class="text-gray-400">Allena il tuo orecchio e la conoscenza della tastiera</p>
+    <header class="w-full max-w-md mb-6 mt-4 text-center">
+        <h1 class="text-3xl sm:text-4xl font-bold text-indigo-500 mb-1">Fretboard Trainer</h1>
+        <p class="text-gray-400 text-sm sm:text-base">Migliora la tua conoscenza della chitarra</p>
     </header>
 
-    <div id="settings-panel" class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700">
-        <h2 class="text-2xl font-semibold mb-6 border-b border-gray-600 pb-2">Configurazione Sessione</h2>
+    <!-- Pannello Impostazioni -->
+    <div id="settings-panel" class="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700 overflow-y-auto max-h-[85vh]">
+        <h2 class="text-xl font-semibold mb-6 border-b border-gray-600 pb-2">Configurazione Sessione</h2>
         
         <div class="space-y-4">
             <div>
-                <label class="block text-sm font-medium text-gray-300 mb-1">Numero di Test</label>
-                <input type="number" id="numTests" value="20" class="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Tipo di Test</label>
+                <select id="testMode" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer">
+                    <option value="single-note" selected>Nota Singola (Trova la nota)</option>
+                    <option value="interval">Intervallo Relativo (Nota + Intervallo)</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Numero di Test</label>
+                <input type="number" id="numTests" value="20" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Corde da includere</label>
+                <div class="grid grid-cols-6 gap-2">
+                    <template id="string-tpl">
+                        <div class="relative">
+                            <input type="checkbox" id="str{{id}}" class="hidden string-checkbox" checked value="{{id}}">
+                            <label for="str{{id}}" class="flex items-center justify-center h-10 w-full bg-gray-700 border border-gray-600 rounded-lg cursor-pointer text-sm font-bold transition-all">{{id}}</label>
+                        </div>
+                    </template>
+                    <div id="strings-container" class="contents"></div>
+                </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1">Tasto Start (0-11)</label>
-                    <input type="number" id="fretStart" value="0" min="0" max="11" class="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Tasto Inizio</label>
+                    <input type="number" id="fretStart" value="0" min="0" max="11" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 outline-none">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1">Tasto End (0-11)</label>
-                    <input type="number" id="fretEnd" value="11" min="0" max="11" class="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Tasto Fine</label>
+                    <input type="number" id="fretEnd" value="11" min="0" max="11" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 outline-none">
                 </div>
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-300 mb-1">Scala</label>
-                <select id="scaleType" class="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Scala Musicale</label>
+                <select id="scaleType" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer">
                     <option value="diatonic" selected>Diatonica (Do Maggiore)</option>
                     <option value="chromatic">Cromatica (Tutte le note)</option>
                 </select>
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-300 mb-1">Tempo per risposta (secondi)</label>
-                <input type="number" id="timeLimit" value="20" class="w-full bg-gray-700 border border-gray-600 rounded p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Tempo per risposta (s)</label>
+                <input type="number" id="timeLimit" value="20" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 outline-none">
             </div>
 
-            <button onclick="startSession()" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded transition duration-200 shadow-lg">
-                AVVIA SESSIONE & ABILITA MICROFONO
+            <button onclick="startSession()" class="w-full mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 px-4 rounded-xl transition duration-200 shadow-lg active:scale-[0.98]">
+                AVVIA SESSIONE
             </button>
         </div>
     </div>
 
-    <div id="game-panel" class="hidden-section w-full max-w-2xl flex flex-col items-center">
-        
-        <div class="w-full bg-gray-700 rounded-full h-2.5 mb-6">
-            <div id="progressBar" class="bg-indigo-500 h-2.5 rounded-full" style="width: 0%"></div>
+    <!-- Pannello Gioco -->
+    <div id="game-panel" class="hidden-section w-full max-w-xl flex flex-col items-center">
+        <div class="w-full bg-gray-700 rounded-full h-1.5 mb-6">
+            <div id="progressBar" class="bg-indigo-500 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
         </div>
 
-        <div class="bg-gray-800 p-10 rounded-3xl shadow-2xl border border-gray-600 w-full text-center relative overflow-hidden">
-            <div id="timerDisplay" class="absolute top-4 right-6 text-2xl font-mono text-yellow-400">20</div>
+        <div class="bg-gray-800 p-6 sm:p-10 rounded-3xl shadow-2xl border border-gray-600 w-full text-center relative overflow-hidden">
+            <div id="timerDisplay" class="absolute top-4 right-6 text-xl sm:text-2xl font-mono text-yellow-400">20</div>
             
-            <p class="text-gray-400 text-lg uppercase tracking-widest mb-2">Trova la nota</p>
-            <h2 id="questionText" class="text-6xl font-extrabold text-white mb-4">--</h2>
+            <p id="modeLabel" class="text-gray-400 text-xs sm:text-sm uppercase tracking-widest mb-2">Trova la nota</p>
+            <h2 id="questionText" class="text-4xl sm:text-6xl font-extrabold text-white mb-2 leading-tight">--</h2>
             
-            <div class="mt-8 p-4 bg-gray-900 rounded-xl border border-gray-700 flex flex-col items-center">
-                <span class="text-xs text-gray-500 uppercase">Input Rilevato</span>
+            <div class="mt-6 sm:mt-10 p-4 bg-gray-900 rounded-2xl border border-gray-700 flex flex-col items-center">
+                <span class="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Microfono / Rilevamento</span>
                 <div class="flex items-baseline space-x-3 mt-1">
-                    <span id="detectedNote" class="text-3xl font-bold text-indigo-400">--</span>
-                    <span id="detectedFreq" class="text-sm text-gray-500 font-mono">0 Hz</span>
+                    <span id="detectedNote" class="text-2xl sm:text-4xl font-bold text-indigo-400">--</span>
+                    <span id="detectedFreq" class="text-xs sm:text-sm text-gray-500 font-mono">0 Hz</span>
                 </div>
             </div>
 
-            <button onclick="finishSession()" class="mt-8 text-gray-400 hover:text-red-400 text-sm font-medium transition-colors flex items-center justify-center mx-auto gap-2">
+            <button onclick="finishSession()" class="mt-10 text-gray-500 hover:text-red-400 text-xs font-semibold transition-colors flex items-center justify-center mx-auto gap-2 py-2 px-4 border border-transparent hover:border-red-900/30 rounded-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
-                INTERROMPI SESSIONE
+                INTERROMPI
             </button>
         </div>
     </div>
 
-    <div id="results-panel" class="hidden-section bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-3xl border border-gray-700">
-        <h2 class="text-3xl font-bold text-center mb-6">Sessione Completata</h2>
+    <!-- Pannello Risultati -->
+    <div id="results-panel" class="hidden-section w-full max-w-2xl bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-2xl border border-gray-700">
+        <h2 class="text-2xl sm:text-3xl font-bold text-center mb-6">Risultati</h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div class="bg-gray-700 p-6 rounded-xl text-center">
-                <p class="text-gray-400 text-sm">Accuratezza</p>
-                <p id="resultAccuracy" class="text-4xl font-bold text-green-400">0%</p>
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="bg-gray-900/50 p-4 rounded-xl text-center border border-gray-700">
+                <p class="text-gray-400 text-[10px] uppercase font-bold">Accuratezza</p>
+                <p id="resultAccuracy" class="text-2xl sm:text-3xl font-bold text-green-400">0%</p>
             </div>
-            <div class="bg-gray-700 p-6 rounded-xl text-center">
-                <p class="text-gray-400 text-sm">Tempo Medio</p>
-                <p id="resultAvgTime" class="text-4xl font-bold text-blue-400">0s</p>
+            <div class="bg-gray-900/50 p-4 rounded-xl text-center border border-gray-700">
+                <p class="text-gray-400 text-[10px] uppercase font-bold">Tempo Medio</p>
+                <p id="resultAvgTime" class="text-2xl sm:text-3xl font-bold text-blue-400">0s</p>
             </div>
         </div>
 
-        <div class="bg-gray-900 p-4 rounded-xl border border-gray-700 h-64">
+        <div class="bg-gray-900 p-2 sm:p-4 rounded-xl border border-gray-700 h-64 sm:h-80 w-full">
             <canvas id="statsChart"></canvas>
         </div>
 
-        <button onclick="location.reload()" class="w-full mt-6 bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded transition duration-200">
-            Nuova Sessione
+        <button onclick="location.reload()" class="w-full mt-6 bg-gray-700 hover:bg-gray-600 text-white font-bold py-4 rounded-xl transition duration-200">
+            NUOVA SESSIONE
         </button>
     </div>
 
     <script>
         // --- DATA & CONFIG ---
         const NOTES_IT = ["Do", "Do#", "Re", "Re#", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "La#", "Si"];
-        const STRINGS = [
-            { id: 1, baseMidi: 64, name: "Mi Cantino (1)" }, // E4
-            { id: 2, baseMidi: 59, name: "Si (2)" },         // B3
-            { id: 3, baseMidi: 55, name: "Sol (3)" },        // G3
-            { id: 4, baseMidi: 50, name: "Re (4)" },         // D3
-            { id: 5, baseMidi: 45, name: "La (5)" },         // A2
-            { id: 6, baseMidi: 40, name: "Mi Basso (6)" }    // E2
+        const STRINGS_DATA = [
+            { id: 1, baseMidi: 64, name: "Mi Cantino (1)" },
+            { id: 2, baseMidi: 59, name: "Si (2)" },
+            { id: 3, baseMidi: 55, name: "Sol (3)" },
+            { id: 4, baseMidi: 50, name: "Re (4)" },
+            { id: 5, baseMidi: 45, name: "La (5)" },
+            { id: 6, baseMidi: 40, name: "Mi Basso (6)" }
+        ];
+
+        const INTERVALS = [
+            { name: "Seconda Minore", semitones: 1 },
+            { name: "Seconda Maggiore", semitones: 2 },
+            { name: "Terza Minore", semitones: 3 },
+            { name: "Terza Maggiore", semitones: 4 },
+            { name: "Quarta Giusta", semitones: 5 },
+            { name: "Tritono", semitones: 6 },
+            { name: "Quinta Giusta", semitones: 7 },
+            { name: "Sesta Minore", semitones: 8 },
+            { name: "Sesta Maggiore", semitones: 9 },
+            { name: "Settima Minore", semitones: 10 },
+            { name: "Settima Maggiore", semitones: 11 }
         ];
         
-        // --- APP STATE ---
+        // Populate strings
+        const container = document.getElementById('strings-container');
+        const tpl = document.getElementById('string-tpl').innerHTML;
+        for(let i=1; i<=6; i++) {
+            container.innerHTML += tpl.replace(/{{id}}/g, i);
+        }
+
         let audioContext = null;
         let analyser = null;
         let microphoneStream = null;
@@ -154,7 +209,6 @@
             activeNote: null
         };
 
-        // --- GESTIONE VOCE (FIX ALTA QUALITÀ) ---
         let selectedVoice = null;
         function loadVoices() {
             const voices = window.speechSynthesis.getVoices();
@@ -167,40 +221,61 @@
         }
         loadVoices();
 
-        function speak(text) {
+        function speakFeedback(text) {
+            if ('speechSynthesis' in window) {
+                const utter = new SpeechSynthesisUtterance(text);
+                if (selectedVoice) utter.voice = selectedVoice;
+                utter.lang = 'it-IT';
+                utter.rate = 1.3;
+                window.speechSynthesis.speak(utter);
+            }
+        }
+
+        function speakAndPlay(text, frequency) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 const utter = new SpeechSynthesisUtterance(text);
                 if (selectedVoice) utter.voice = selectedVoice;
                 utter.lang = 'it-IT';
-                utter.rate = 1.0; 
+                utter.rate = 1.05;
                 utter.pitch = 1.0;
+                utter.onend = () => { if(frequency) playTargetNote(frequency); };
                 window.speechSynthesis.speak(utter);
+            } else if(frequency) {
+                playTargetNote(frequency);
             }
         }
 
         // --- AUDIO ENGINE ---
 
+        function playTargetNote(frequency) {
+            if (!audioContext) return;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.type = 'triangle';
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.15, audioContext.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.15, audioContext.currentTime + 0.8);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 1.2);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 1.2);
+        }
+
         function autoCorrelate(buf, sampleRate) {
             let SIZE = buf.length;
             let rms = 0;
-
-            for (let i = 0; i < SIZE; i++) {
-                let val = buf[i];
-                rms += val * val;
-            }
+            for (let i = 0; i < SIZE; i++) { rms += buf[i] * buf[i]; }
             rms = Math.sqrt(rms / SIZE);
             if (rms < 0.01) return -1;
 
             let r1 = 0, r2 = SIZE - 1, thres = 0.2;
-            for (let i = 0; i < SIZE / 2; i++)
-                if (Math.abs(buf[i]) < thres) { r1 = i; break; }
-            for (let i = 1; i < SIZE / 2; i++)
-                if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
-
+            for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
+            for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
             buf = buf.slice(r1, r2);
             SIZE = buf.length;
-
             let c = new Array(SIZE).fill(0);
             for (let i = 0; i < SIZE; i++)
                 for (let j = 0; j < SIZE - i; j++)
@@ -209,18 +284,13 @@
             let d = 0; while (c[d] > c[d + 1]) d++;
             let maxval = -1, maxpos = -1;
             for (let i = d; i < SIZE; i++) {
-                if (c[i] > maxval) {
-                    maxval = c[i];
-                    maxpos = i;
-                }
+                if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
             }
             let T0 = maxpos;
-
             let x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
             let a = (x1 + x3 - 2 * x2) / 2;
             let b = (x3 - x1) / 2;
             if (a) T0 = T0 - b / (2 * a);
-
             return sampleRate / T0;
         }
 
@@ -229,55 +299,47 @@
             return Math.round(noteNum) + 69;
         }
 
+        function frequencyFromNoteNumber(note) {
+            return 440 * Math.pow(2, (note - 69) / 12);
+        }
+
         function getNoteName(midiNum) {
             return NOTES_IT[midiNum % 12];
         }
 
         async function initAudio() {
             try {
-                if (!audioContext) {
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                }
+                if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioContext.state === 'suspended') await audioContext.resume();
                 microphoneStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                
                 analyser = audioContext.createAnalyser();
                 analyser.fftSize = 2048;
-                
                 const source = audioContext.createMediaStreamSource(microphoneStream);
                 source.connect(analyser);
-                
                 requestAnimationFrame(updatePitch);
-            } catch (e) {
-                alert("Errore accesso microfono! Assicurati di usare HTTPS o localhost.");
-                console.error(e);
-            }
+            } catch (e) { alert("Errore accesso microfono!"); }
         }
 
         let pitchBuffer = []; 
-        
         function updatePitch() {
             if (!isListening) return;
-
             const buf = new Float32Array(analyser.fftSize);
             analyser.getFloatTimeDomainData(buf);
             const freq = autoCorrelate(buf, audioContext.sampleRate);
-
             const freqDisplay = document.getElementById("detectedFreq");
             const noteDisplay = document.getElementById("detectedNote");
 
             if (freq !== -1) {
                 const midiNum = noteFromPitch(freq);
                 const noteName = getNoteName(midiNum);
-                
                 freqDisplay.innerText = Math.round(freq) + " Hz";
                 noteDisplay.innerText = noteName;
 
                 if (session.activeNote) {
-                    if (midiNum === session.activeNote.midiVal) {
+                    // Check only the base note name (octave independent)
+                    if ((midiNum % 12) === (session.activeNote.targetMidi % 12)) {
                         pitchBuffer.push(midiNum);
-                        if (pitchBuffer.length > 5) { 
-                           endTest(true);
-                        }
+                        if (pitchBuffer.length > 3) endTest(true);
                     } else {
                         pitchBuffer = [];
                     }
@@ -285,74 +347,83 @@
             } else {
                 pitchBuffer = [];
             }
-
             requestAnimationFrame(updatePitch);
         }
 
         // --- GAME LOGIC ---
-
         function startSession() {
+            const selectedStrings = [];
+            for(let i=1; i<=6; i++) {
+                if(document.getElementById(`str${i}`).checked) selectedStrings.push(i);
+            }
+            if(selectedStrings.length === 0) { alert("Seleziona almeno una corda!"); return; }
+
             config.numTests = parseInt(document.getElementById('numTests').value);
             config.fretStart = parseInt(document.getElementById('fretStart').value);
             config.fretEnd = parseInt(document.getElementById('fretEnd').value);
             config.scaleType = document.getElementById('scaleType').value;
             config.timeLimit = parseInt(document.getElementById('timeLimit').value);
-
-            if(config.fretStart > config.fretEnd) { alert("Il tasto di partenza deve essere minore di quello di arrivo"); return; }
+            config.testMode = document.getElementById('testMode').value;
+            config.selectedStrings = selectedStrings;
 
             document.getElementById('settings-panel').classList.add('hidden-section');
             document.getElementById('game-panel').classList.remove('hidden-section');
-            document.getElementById('results-panel').classList.add('hidden-section');
-            
             initAudio();
             isListening = true;
             session.currentTestIndex = 0;
             session.correctCount = 0;
             session.totalTime = 0;
             session.tests = [];
-
             nextTest();
         }
 
         function nextTest() {
-            if (session.currentTestIndex >= config.numTests) {
-                finishSession();
-                return;
-            }
-
+            if (session.currentTestIndex >= config.numTests) { finishSession(); return; }
             session.currentTestIndex++;
             updateProgressBar();
             
             let valid = false;
-            let strObj, fret, midiVal, noteName;
+            let strObj, fret, baseMidi, baseNoteName;
+            const availableStrings = STRINGS_DATA.filter(s => config.selectedStrings.includes(s.id));
 
             while (!valid) {
-                strObj = STRINGS[Math.floor(Math.random() * STRINGS.length)];
+                strObj = availableStrings[Math.floor(Math.random() * availableStrings.length)];
                 fret = Math.floor(Math.random() * (config.fretEnd - config.fretStart + 1)) + config.fretStart;
-                midiVal = strObj.baseMidi + fret;
-                noteName = getNoteName(midiVal);
-
+                baseMidi = strObj.baseMidi + fret;
+                baseNoteName = getNoteName(baseMidi);
                 if (config.scaleType === 'diatonic') {
-                    if (!noteName.includes('#')) valid = true;
+                    if (!baseNoteName.includes('#')) valid = true;
                 } else {
                     valid = true;
                 }
             }
 
+            let targetMidi, targetNoteName, intervalObj = null;
+
+            if (config.testMode === 'interval') {
+                intervalObj = INTERVALS[Math.floor(Math.random() * INTERVALS.length)];
+                targetMidi = baseMidi + intervalObj.semitones;
+                targetNoteName = getNoteName(targetMidi);
+                document.getElementById('modeLabel').innerText = "Trova l'intervallo";
+                document.getElementById('questionText').innerHTML = `<span class="text-2xl block text-indigo-300 font-normal">Intervallo di ${intervalObj.name} da</span>${baseNoteName}<br><span class="text-xl text-indigo-400 font-semibold uppercase tracking-widest">Corda ${strObj.id}</span>`;
+                speakAndPlay(`Trova la ${intervalObj.name} di ${baseNoteName}, corda ${strObj.id}`, frequencyFromNoteNumber(baseMidi));
+            } else {
+                targetMidi = baseMidi;
+                targetNoteName = baseNoteName;
+                document.getElementById('modeLabel').innerText = "Trova la nota";
+                document.getElementById('questionText').innerHTML = `${baseNoteName}<br><span class="text-xl text-indigo-400 font-semibold uppercase tracking-widest">Corda ${strObj.id}</span>`;
+                speakAndPlay(`${baseNoteName}, corda ${strObj.id}`, frequencyFromNoteNumber(baseMidi));
+            }
+
             session.activeNote = { 
-                name: noteName, 
-                string: strObj.name, 
-                midiVal: midiVal, 
-                stringId: strObj.id 
+                baseName: baseNoteName, 
+                targetName: targetNoteName, 
+                targetMidi: targetMidi,
+                intervalName: intervalObj ? intervalObj.name : null
             };
-
-            document.getElementById('questionText').innerHTML = `${noteName}<br><span class="text-2xl text-indigo-300 font-normal">Corda ${strObj.id}</span>`;
+            
             document.getElementById('detectedNote').innerText = "--";
-            document.getElementById('detectedFreq').innerText = "ASCOLTO...";
             pitchBuffer = [];
-
-            speak(`${noteName}, corda ${strObj.id}`);
-
             session.timeLeft = config.timeLimit;
             document.getElementById('timerDisplay').innerText = session.timeLeft;
             session.startTime = Date.now();
@@ -361,37 +432,31 @@
             session.timerInterval = setInterval(() => {
                 session.timeLeft--;
                 document.getElementById('timerDisplay').innerText = session.timeLeft;
-                if (session.timeLeft <= 0) {
-                    endTest(false);
-                }
+                if (session.timeLeft <= 0) endTest(false);
             }, 1000);
         }
 
         function endTest(success) {
             clearInterval(session.timerInterval);
             const timeTaken = (Date.now() - session.startTime) / 1000;
+            const targetNote = session.activeNote.targetName;
             session.totalTime += Math.min(timeTaken, config.timeLimit);
-            
-            session.tests.push({
-                note: session.activeNote.name,
-                success: success,
-                time: timeTaken
-            });
+            session.tests.push({ note: targetNote, success: success, time: timeTaken });
 
             if (success) {
                 session.correctCount++;
                 document.body.classList.add('flash-success');
+                speakFeedback("Corretto");
             } else {
                 document.body.classList.add('flash-fail');
+                speakFeedback("Sbagliato, era " + targetNote);
             }
 
             session.activeNote = null; 
-
             setTimeout(() => {
-                document.body.classList.remove('flash-success');
-                document.body.classList.remove('flash-fail');
+                document.body.classList.remove('flash-success', 'flash-fail');
                 if (isListening) nextTest();
-            }, 1500); 
+            }, 1800);
         }
 
         function updateProgressBar() {
@@ -402,66 +467,49 @@
         function finishSession() {
             isListening = false;
             clearInterval(session.timerInterval);
-            if (microphoneStream) {
-                microphoneStream.getTracks().forEach(track => track.stop());
-            }
-            
+            if (microphoneStream) microphoneStream.getTracks().forEach(track => track.stop());
             document.getElementById('game-panel').classList.add('hidden-section');
             document.getElementById('results-panel').classList.remove('hidden-section');
-
-            const totalConcluded = session.tests.length;
-            const accuracy = totalConcluded > 0 ? Math.round((session.correctCount / totalConcluded) * 100) : 0;
-            const avgTime = totalConcluded > 0 ? (session.totalTime / totalConcluded).toFixed(1) : 0;
-
+            const total = session.tests.length;
+            const accuracy = total > 0 ? Math.round((session.correctCount / total) * 100) : 0;
+            const avgTime = total > 0 ? (session.totalTime / total).toFixed(1) : 0;
             document.getElementById('resultAccuracy').innerText = `${accuracy}%`;
             document.getElementById('resultAvgTime').innerText = `${avgTime}s`;
-
             renderChart();
         }
 
         function renderChart() {
             let noteStats = {};
             NOTES_IT.forEach(n => noteStats[n] = { correct: 0, total: 0 });
-
             session.tests.forEach(t => {
                 if(noteStats[t.note]) {
                     noteStats[t.note].total++;
                     if(t.success) noteStats[t.note].correct++;
                 }
             });
-
             const labels = Object.keys(noteStats).filter(n => noteStats[n].total > 0);
             const data = labels.map(n => (noteStats[n].correct / noteStats[n].total) * 100);
-
             const ctx = document.getElementById('statsChart').getContext('2d');
-            
-            // Distruggi grafico precedente se esiste
-            const chartStatus = Chart.getChart("statsChart");
-            if (chartStatus !== undefined) {
-                chartStatus.destroy();
-            }
-
+            const oldChart = Chart.getChart("statsChart");
+            if (oldChart) oldChart.destroy();
             new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: '% Successo per Nota',
                         data: data,
                         backgroundColor: data.map(v => v >= 80 ? '#4ade80' : (v >= 50 ? '#facc15' : '#f87171')),
-                        borderRadius: 5
+                        borderRadius: 6
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        y: { beginAtZero: true, max: 100, grid: { color: '#374151' } },
-                        x: { grid: { display: false } }
+                        y: { beginAtZero: true, max: 100, ticks: { color: '#9ca3af', font: { size: 10 } } },
+                        x: { ticks: { color: '#9ca3af', font: { size: 11, weight: 'bold' } } }
                     },
-                    plugins: {
-                        legend: { display: false }
-                    }
+                    plugins: { legend: { display: false } }
                 }
             });
         }
