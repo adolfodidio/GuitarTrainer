@@ -25,7 +25,7 @@
             100% { background-color: #111827; }
         }
         
-        .hidden-section { display: none; }
+        .hidden-section { display: none !important; }
 
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #1f2937; }
@@ -107,16 +107,16 @@
     </div>
 
     <!-- Pannello Gioco -->
-    <div id="game-panel" class="hidden-section w-full max-w-xl flex flex-col items-center">
+    <div id="game-panel" class="hidden-section w-full max-w-md flex flex-col items-center">
         <div class="w-full bg-gray-700 rounded-full h-1.5 mb-6">
             <div id="progressBar" class="bg-indigo-500 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
         </div>
 
-        <div class="bg-gray-800 p-6 sm:p-10 rounded-3xl shadow-2xl border border-gray-600 w-full text-center relative overflow-hidden">
+        <div class="bg-gray-800 p-6 sm:p-8 rounded-3xl shadow-2xl border border-gray-700 w-full text-center relative overflow-hidden">
             <div id="timerDisplay" class="absolute top-4 right-6 text-xl sm:text-2xl font-mono text-yellow-400">20</div>
             
             <p id="modeLabel" class="text-gray-400 text-xs sm:text-sm uppercase tracking-widest mb-2">Trova la nota</p>
-            <h2 id="questionText" class="text-4xl sm:text-6xl font-extrabold text-white mb-2 leading-tight">--</h2>
+            <h2 id="questionText" class="text-4xl sm:text-5xl font-extrabold text-white mb-2 leading-tight">--</h2>
             
             <div class="mt-6 sm:mt-10 p-4 bg-gray-900 rounded-2xl border border-gray-700 flex flex-col items-center">
                 <span class="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Microfono / Rilevamento</span>
@@ -126,17 +126,17 @@
                 </div>
             </div>
 
-            <button onclick="finishSession()" class="mt-10 text-gray-500 hover:text-red-400 text-xs font-semibold transition-colors flex items-center justify-center mx-auto gap-2 py-2 px-4 border border-transparent hover:border-red-900/30 rounded-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <button onclick="finishSession()" class="w-full mt-10 bg-red-600 hover:bg-red-500 text-white font-bold py-4 px-4 rounded-xl transition duration-200 shadow-lg active:scale-[0.98] flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
-                INTERROMPI
+                INTERROMPI SESSIONE
             </button>
         </div>
     </div>
 
     <!-- Pannello Risultati -->
-    <div id="results-panel" class="hidden-section w-full max-w-2xl bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-2xl border border-gray-700">
+    <div id="results-panel" class="hidden-section w-full max-w-md bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-2xl border border-gray-700">
         <h2 class="text-2xl sm:text-3xl font-bold text-center mb-6">Risultati</h2>
         
         <div class="grid grid-cols-2 gap-4 mb-6">
@@ -150,11 +150,11 @@
             </div>
         </div>
 
-        <div class="bg-gray-900 p-2 sm:p-4 rounded-xl border border-gray-700 h-64 sm:h-80 w-full">
+        <div class="bg-gray-900 p-2 sm:p-4 rounded-xl border border-gray-700 h-64 w-full">
             <canvas id="statsChart"></canvas>
         </div>
 
-        <button onclick="location.reload()" class="w-full mt-6 bg-gray-700 hover:bg-gray-600 text-white font-bold py-4 rounded-xl transition duration-200">
+        <button onclick="location.reload()" class="w-full mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl transition duration-200 shadow-lg active:scale-[0.98]">
             NUOVA SESSIONE
         </button>
     </div>
@@ -186,7 +186,7 @@
             { name: "Settima Maggiore", semitones: 11 }
         ];
         
-        // Populate strings
+        // Inizializzazione corde
         const container = document.getElementById('strings-container');
         const tpl = document.getElementById('string-tpl').innerHTML;
         for(let i=1; i<=6; i++) {
@@ -210,11 +210,10 @@
             activeNote: null
         };
 
-        // --- SPEECH ENGINE (FORCED ITALIAN) ---
+        // --- MOTORE VOCALE ---
         let italianVoice = null;
         function loadVoices() {
             const voices = window.speechSynthesis.getVoices();
-            // Cerca prima voci Google in italiano (più naturali), poi qualsiasi italiana
             italianVoice = voices.find(v => v.lang === 'it-IT' && v.name.includes('Google')) ||
                            voices.find(v => v.lang === 'it-IT') ||
                            voices.find(v => v.lang.startsWith('it'));
@@ -227,10 +226,10 @@
 
         function speak(text, rate = 1.1) {
             if (!('speechSynthesis' in window)) return;
-            window.speechSynthesis.cancel(); // Interrompi sintesi precedente
+            window.speechSynthesis.cancel();
             
             const utter = new SpeechSynthesisUtterance(text);
-            if (!italianVoice) loadVoices(); // Riprova a caricare se mancante
+            if (!italianVoice) loadVoices();
             
             utter.voice = italianVoice;
             utter.lang = 'it-IT';
@@ -254,7 +253,7 @@
             }
         }
 
-        // --- AUDIO ENGINE ---
+        // --- MOTORE AUDIO ---
         function playTargetNote(frequency) {
             if (!audioContext) return;
             const oscillator = audioContext.createOscillator();
@@ -325,7 +324,7 @@
                 const source = audioContext.createMediaStreamSource(microphoneStream);
                 source.connect(analyser);
                 requestAnimationFrame(updatePitch);
-            } catch (e) { alert("Errore accesso microfono! Per favore consenti l'uso dell'audio."); }
+            } catch (e) { console.error("Microfono negato"); }
         }
 
         let pitchBuffer = []; 
@@ -357,13 +356,13 @@
             requestAnimationFrame(updatePitch);
         }
 
-        // --- GAME LOGIC ---
+        // --- LOGICA GIOCO ---
         function startSession() {
             const selectedStrings = [];
             for(let i=1; i<=6; i++) {
                 if(document.getElementById(`str${i}`).checked) selectedStrings.push(i);
             }
-            if(selectedStrings.length === 0) { alert("Seleziona almeno una corda!"); return; }
+            if(selectedStrings.length === 0) { return; }
 
             config.numTests = parseInt(document.getElementById('numTests').value);
             config.fretStart = parseInt(document.getElementById('fretStart').value);
@@ -373,7 +372,9 @@
             config.testMode = document.getElementById('testMode').value;
             config.selectedStrings = selectedStrings;
 
+            // Navigazione: Nascondi impostazioni, mostra gioco
             document.getElementById('settings-panel').classList.add('hidden-section');
+            document.getElementById('results-panel').classList.add('hidden-section'); // Assicura che sia nascosto
             document.getElementById('game-panel').classList.remove('hidden-section');
             
             initAudio();
@@ -480,8 +481,12 @@
             isListening = false;
             clearInterval(session.timerInterval);
             if (microphoneStream) microphoneStream.getTracks().forEach(track => track.stop());
+            
+            // Navigazione: Nascondi gioco, mostra risultati
             document.getElementById('game-panel').classList.add('hidden-section');
+            document.getElementById('settings-panel').classList.add('hidden-section');
             document.getElementById('results-panel').classList.remove('hidden-section');
+            
             const total = session.tests.length;
             const accuracy = total > 0 ? Math.round((session.correctCount / total) * 100) : 0;
             const avgTime = total > 0 ? (session.totalTime / total).toFixed(1) : 0;
