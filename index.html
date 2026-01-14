@@ -161,7 +161,8 @@
 
     <script>
         // --- DATA & CONFIG ---
-        const NOTES_IT = ["Do", "Do#", "Re", "Re#", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "La#", "Si"];
+        const NOTES_IT = ["Do", "Do diesis", "Re", "Re diesis", "Mi", "Fa", "Fa diesis", "Sol", "Sol diesis", "La", "La diesis", "Si"];
+        const NOTES_DISPLAY = ["Do", "Do#", "Re", "Re#", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "La#", "Si"];
         const STRINGS_DATA = [
             { id: 1, baseMidi: 64, name: "Mi Cantino (1)" },
             { id: 2, baseMidi: 59, name: "Si (2)" },
@@ -209,36 +210,43 @@
             activeNote: null
         };
 
-        let selectedVoice = null;
+        // --- SPEECH ENGINE (FORCED ITALIAN) ---
+        let italianVoice = null;
         function loadVoices() {
             const voices = window.speechSynthesis.getVoices();
-            selectedVoice = voices.find(v => v.lang.startsWith('it') && v.name.includes('Google')) ||
-                            voices.find(v => v.lang.startsWith('it') && v.name.includes('Natural')) ||
-                            voices.find(v => v.lang.startsWith('it'));
+            // Cerca prima voci Google in italiano (più naturali), poi qualsiasi italiana
+            italianVoice = voices.find(v => v.lang === 'it-IT' && v.name.includes('Google')) ||
+                           voices.find(v => v.lang === 'it-IT') ||
+                           voices.find(v => v.lang.startsWith('it'));
         }
+        
         if (speechSynthesis.onvoiceschanged !== undefined) {
             speechSynthesis.onvoiceschanged = loadVoices;
         }
         loadVoices();
 
+        function speak(text, rate = 1.1) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel(); // Interrompi sintesi precedente
+            
+            const utter = new SpeechSynthesisUtterance(text);
+            if (!italianVoice) loadVoices(); // Riprova a caricare se mancante
+            
+            utter.voice = italianVoice;
+            utter.lang = 'it-IT';
+            utter.rate = rate;
+            utter.pitch = 1.0;
+            return utter;
+        }
+
         function speakFeedback(text) {
-            if ('speechSynthesis' in window) {
-                const utter = new SpeechSynthesisUtterance(text);
-                if (selectedVoice) utter.voice = selectedVoice;
-                utter.lang = 'it-IT';
-                utter.rate = 1.3;
-                window.speechSynthesis.speak(utter);
-            }
+            const utter = speak(text, 1.3);
+            if (utter) window.speechSynthesis.speak(utter);
         }
 
         function speakAndPlay(text, frequency) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utter = new SpeechSynthesisUtterance(text);
-                if (selectedVoice) utter.voice = selectedVoice;
-                utter.lang = 'it-IT';
-                utter.rate = 1.05;
-                utter.pitch = 1.0;
+            const utter = speak(text, 1.05);
+            if (utter) {
                 utter.onend = () => { if(frequency) playTargetNote(frequency); };
                 window.speechSynthesis.speak(utter);
             } else if(frequency) {
@@ -247,7 +255,6 @@
         }
 
         // --- AUDIO ENGINE ---
-
         function playTargetNote(frequency) {
             if (!audioContext) return;
             const oscillator = audioContext.createOscillator();
@@ -303,8 +310,9 @@
             return 440 * Math.pow(2, (note - 69) / 12);
         }
 
-        function getNoteName(midiNum) {
-            return NOTES_IT[midiNum % 12];
+        function getNoteName(midiNum, forSpeech = false) {
+            const list = forSpeech ? NOTES_IT : NOTES_DISPLAY;
+            return list[midiNum % 12];
         }
 
         async function initAudio() {
@@ -317,7 +325,7 @@
                 const source = audioContext.createMediaStreamSource(microphoneStream);
                 source.connect(analyser);
                 requestAnimationFrame(updatePitch);
-            } catch (e) { alert("Errore accesso microfono!"); }
+            } catch (e) { alert("Errore accesso microfono! Per favore consenti l'uso dell'audio."); }
         }
 
         let pitchBuffer = []; 
@@ -331,12 +339,11 @@
 
             if (freq !== -1) {
                 const midiNum = noteFromPitch(freq);
-                const noteName = getNoteName(midiNum);
+                const noteNameDisplay = getNoteName(midiNum);
                 freqDisplay.innerText = Math.round(freq) + " Hz";
-                noteDisplay.innerText = noteName;
+                noteDisplay.innerText = noteNameDisplay;
 
                 if (session.activeNote) {
-                    // Check only the base note name (octave independent)
                     if ((midiNum % 12) === (session.activeNote.targetMidi % 12)) {
                         pitchBuffer.push(midiNum);
                         if (pitchBuffer.length > 3) endTest(true);
@@ -368,6 +375,7 @@
 
             document.getElementById('settings-panel').classList.add('hidden-section');
             document.getElementById('game-panel').classList.remove('hidden-section');
+            
             initAudio();
             isListening = true;
             session.currentTestIndex = 0;
@@ -383,7 +391,7 @@
             updateProgressBar();
             
             let valid = false;
-            let strObj, fret, baseMidi, baseNoteName;
+            let strObj, fret, baseMidi, baseNoteName, baseNoteSpeech;
             const availableStrings = STRINGS_DATA.filter(s => config.selectedStrings.includes(s.id));
 
             while (!valid) {
@@ -391,6 +399,7 @@
                 fret = Math.floor(Math.random() * (config.fretEnd - config.fretStart + 1)) + config.fretStart;
                 baseMidi = strObj.baseMidi + fret;
                 baseNoteName = getNoteName(baseMidi);
+                baseNoteSpeech = getNoteName(baseMidi, true);
                 if (config.scaleType === 'diatonic') {
                     if (!baseNoteName.includes('#')) valid = true;
                 } else {
@@ -398,28 +407,29 @@
                 }
             }
 
-            let targetMidi, targetNoteName, intervalObj = null;
+            let targetMidi, targetNoteName, targetNoteSpeech, intervalObj = null;
 
             if (config.testMode === 'interval') {
                 intervalObj = INTERVALS[Math.floor(Math.random() * INTERVALS.length)];
                 targetMidi = baseMidi + intervalObj.semitones;
                 targetNoteName = getNoteName(targetMidi);
+                targetNoteSpeech = getNoteName(targetMidi, true);
                 document.getElementById('modeLabel').innerText = "Trova l'intervallo";
-                document.getElementById('questionText').innerHTML = `<span class="text-2xl block text-indigo-300 font-normal">Intervallo di ${intervalObj.name} da</span>${baseNoteName}<br><span class="text-xl text-indigo-400 font-semibold uppercase tracking-widest">Corda ${strObj.id}</span>`;
-                speakAndPlay(`Trova la ${intervalObj.name} di ${baseNoteName}, corda ${strObj.id}`, frequencyFromNoteNumber(baseMidi));
+                document.getElementById('questionText').innerHTML = `<span class="text-2xl block text-indigo-300 font-normal">${intervalObj.name} di</span>${baseNoteName}<br><span class="text-xl text-indigo-400 font-semibold uppercase tracking-widest">Corda ${strObj.id}</span>`;
+                speakAndPlay(`Trova la ${intervalObj.name} di ${baseNoteSpeech}, sulla corda ${strObj.id}`, frequencyFromNoteNumber(baseMidi));
             } else {
                 targetMidi = baseMidi;
                 targetNoteName = baseNoteName;
+                targetNoteSpeech = baseNoteSpeech;
                 document.getElementById('modeLabel').innerText = "Trova la nota";
                 document.getElementById('questionText').innerHTML = `${baseNoteName}<br><span class="text-xl text-indigo-400 font-semibold uppercase tracking-widest">Corda ${strObj.id}</span>`;
-                speakAndPlay(`${baseNoteName}, corda ${strObj.id}`, frequencyFromNoteNumber(baseMidi));
+                speakAndPlay(`${baseNoteSpeech}, sulla corda ${strObj.id}`, frequencyFromNoteNumber(baseMidi));
             }
 
             session.activeNote = { 
-                baseName: baseNoteName, 
                 targetName: targetNoteName, 
-                targetMidi: targetMidi,
-                intervalName: intervalObj ? intervalObj.name : null
+                targetSpeech: targetNoteSpeech,
+                targetMidi: targetMidi 
             };
             
             document.getElementById('detectedNote').innerText = "--";
@@ -439,9 +449,11 @@
         function endTest(success) {
             clearInterval(session.timerInterval);
             const timeTaken = (Date.now() - session.startTime) / 1000;
-            const targetNote = session.activeNote.targetName;
+            const targetNoteName = session.activeNote.targetName;
+            const targetNoteSpeech = session.activeNote.targetSpeech;
+            
             session.totalTime += Math.min(timeTaken, config.timeLimit);
-            session.tests.push({ note: targetNote, success: success, time: timeTaken });
+            session.tests.push({ note: targetNoteName, success: success, time: timeTaken });
 
             if (success) {
                 session.correctCount++;
@@ -449,7 +461,7 @@
                 speakFeedback("Corretto");
             } else {
                 document.body.classList.add('flash-fail');
-                speakFeedback("Sbagliato, era " + targetNote);
+                speakFeedback(`Sbagliato. Era ${targetNoteSpeech}`);
             }
 
             session.activeNote = null; 
@@ -480,7 +492,7 @@
 
         function renderChart() {
             let noteStats = {};
-            NOTES_IT.forEach(n => noteStats[n] = { correct: 0, total: 0 });
+            NOTES_DISPLAY.forEach(n => noteStats[n] = { correct: 0, total: 0 });
             session.tests.forEach(t => {
                 if(noteStats[t.note]) {
                     noteStats[t.note].total++;
