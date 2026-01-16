@@ -343,14 +343,21 @@
                 noteDisplay.innerText = noteNameDisplay;
 
                 if (session.activeNote) {
+                    // Controllo se la nota rilevata corrisponde alla nota target (ignorando l'ottava)
                     if ((midiNum % 12) === (session.activeNote.targetMidi % 12)) {
                         pitchBuffer.push(midiNum);
-                        if (pitchBuffer.length > 3) endTest(true);
+                        // Stabilizzazione: richiede 5 rilevamenti consecutivi della nota corretta
+                        if (pitchBuffer.length >= 5) {
+                            endTest(true);
+                            pitchBuffer = [];
+                        }
                     } else {
+                        // Resetta il buffer se viene rilevata una nota diversa
                         pitchBuffer = [];
                     }
                 }
             } else {
+                // Resetta il buffer se non viene rilevata alcuna frequenza stabile
                 pitchBuffer = [];
             }
             requestAnimationFrame(updatePitch);
