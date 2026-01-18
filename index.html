@@ -256,9 +256,12 @@
 
         // --- MOTORE VOCALE ---
         let italianVoice = null;
+        
         function loadVoices() {
             const voices = window.speechSynthesis.getVoices();
             italianVoice = voices.find(v => v.lang === 'it-IT' && v.name.includes('Google')) ||
+                           // Cerca "Elsa" (comune su Windows) ma evita la versione "Online" che è lenta
+                           voices.find(v => v.lang === 'it-IT' && v.name.includes('Elsa') && !v.name.includes('Online')) ||
                            voices.find(v => v.lang === 'it-IT') ||
                            voices.find(v => v.lang.startsWith('it'));
         }
@@ -283,7 +286,7 @@
         }
 
         function speakFeedback(text) {
-            const utter = speak(text, 1.3);
+            const utter = speak(text, 1.1);
             if (utter) {
                 isWaitingForSpeech = true;
                 utter.onend = () => { isWaitingForSpeech = false; };
@@ -292,17 +295,17 @@
         }
 
         function speakAndPlay(text, frequency) {
+            if(frequency) playTargetNote(frequency);
+            
             const utter = speak(text, 1.05);
             isWaitingForSpeech = true;
             
             if (utter) {
                 utter.onend = () => { 
-                    if(frequency) playTargetNote(frequency);
                     startQuestionTimer();
                 };
                 window.speechSynthesis.speak(utter);
-            } else if(frequency) {
-                playTargetNote(frequency);
+            } else {
                 startQuestionTimer();
             }
         }
