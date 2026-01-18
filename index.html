@@ -663,9 +663,10 @@
             [1,2,3,4,5,6].forEach(s => stringStats[s] = { correct: 0, total: 0 });
 
             session.tests.forEach(t => {
-                if(noteStats[t.note]) {
-                    noteStats[t.note].total++;
-                    if(t.success) noteStats[t.note].correct++;
+                const cleanNote = t.note.replace(/[0-9-]/g, '');
+                if(noteStats[cleanNote]) {
+                    noteStats[cleanNote].total++;
+                    if(t.success) noteStats[cleanNote].correct++;
                 }
                 if(stringStats[t.stringId]) {
                     stringStats[t.stringId].total++;
