@@ -324,18 +324,28 @@
         // --- MOTORE AUDIO ---
         function playTargetNote(frequency) {
             if (!audioContext) return;
+            const t = audioContext.currentTime;
+            
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
-            oscillator.type = 'triangle';
-            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.15, audioContext.currentTime + 0.1);
-            gainNode.gain.setValueAtTime(0.15, audioContext.currentTime + 0.8);
-            gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 1.2);
-            oscillator.connect(gainNode);
+            const filter = audioContext.createBiquadFilter();
+
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(frequency, t);
+
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(frequency * 4, t);
+            filter.frequency.exponentialRampToValueAtTime(frequency, t + 0.5);
+
+            gainNode.gain.setValueAtTime(0, t);
+            gainNode.gain.linearRampToValueAtTime(0.2, t + 0.02);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, t + 2.0);
+
+            oscillator.connect(filter);
+            filter.connect(gainNode);
             gainNode.connect(audioContext.destination);
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 1.2);
+            oscillator.start(t);
+            oscillator.stop(t + 2.0);
         }
 
         function autoCorrelate(buf, sampleRate) {
