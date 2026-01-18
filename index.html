@@ -379,7 +379,13 @@
 
         function getNoteName(midiNum, forSpeech = false) {
             const list = forSpeech ? NOTES_IT : NOTES_DISPLAY;
-            return list[midiNum % 12];
+            const noteName = list[midiNum % 12];
+            const octave = Math.floor(midiNum / 12) - 1;
+
+            if (forSpeech) {
+                return `${noteName} ${octave}`;
+            }
+            return noteName + octave;
         }
 
         async function initAudio() {
@@ -395,7 +401,7 @@
             } catch (e) { console.error("Microfono negato"); }
         }
 
-        let pitchBuffer = []; 
+        let pitchBuffer = [];
         function updatePitch() {
             if (!isListening) return;
             const buf = new Float32Array(analyser.fftSize);
@@ -411,7 +417,7 @@
                 noteDisplay.innerText = noteNameDisplay;
 
                 if (!isWaitingForSpeech && session.activeNote) {
-                    if ((midiNum % 12) === (session.activeNote.targetMidi % 12)) {
+                    if (midiNum === session.activeNote.targetMidi) {
                         pitchBuffer.push(midiNum);
                         if (pitchBuffer.length >= 5) {
                             endTest(true);
@@ -426,7 +432,7 @@
             }
             requestAnimationFrame(updatePitch);
         }
-
+		
         // --- LOGICA GIOCO ---
         function startSession() {
             const selectedStrings = [];
