@@ -94,6 +94,7 @@
             border-bottom: 1px solid #666;
             height: 25px;
             position: relative;
+            z-index: 5;
         }
         
         .tab-note {
@@ -109,6 +110,27 @@
             font-size: 12px;
             top: -12px;
             z-index: 10;
+        }
+        
+        #tab-visualizer {
+            position: relative;
+            padding-bottom: 25px; /* Spazio per i numeri */
+        }
+        .fret-line {
+            position: absolute;
+            top: 0;
+            height: 100px; /* 4 corde * 25px */
+            width: 1px;
+            background: #333;
+            z-index: 0;
+        }
+        .fret-number {
+            position: absolute;
+            top: 105px;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: #666;
+            font-family: sans-serif;
         }
 
         /* Responsive */
@@ -174,6 +196,8 @@
             major6: [0, 2, 4, 5, 7, 8, 9, 11], // 1, 2, 3, 4, 5, b6, 6, 7
             minor6: [0, 2, 3, 5, 7, 8, 9, 11]  // 1, 2, b3, 4, 5, b6, 6, 7
         };
+
+        const MAX_FRETS = 20;
 
         // Forme di Riferimento in DO (C) - Drop 2 (Corde 1-2-3-4)
         const REF_SHAPES = {
@@ -273,6 +297,30 @@
             });
         }
 
+        function drawFretboardGrid() {
+            const visualizer = document.getElementById('tab-visualizer');
+            if(visualizer.querySelector('.fret-number')) return; // Già disegnata
+
+            for (let i = 0; i <= MAX_FRETS; i++) {
+                const left = (i / MAX_FRETS) * 100;
+                
+                // Linea tasto (escluso capotasto 0 se si vuole, ma mettiamolo per riferimento)
+                if (i > 0) {
+                    const line = document.createElement('div');
+                    line.className = 'fret-line';
+                    line.style.left = `${left}%`;
+                    visualizer.appendChild(line);
+                }
+                
+                // Numero tasto
+                const num = document.createElement('div');
+                num.className = 'fret-number';
+                num.innerText = i;
+                num.style.left = `${left}%`;
+                visualizer.appendChild(num);
+            }
+        }
+
         function showTab(chord) {
             document.getElementById('tab-instruction').innerText = `Visualizzando: ${chord.name} (Drop 2 - Corde 1,2,3,4)`;
             
@@ -295,7 +343,7 @@
                 
                 // Posiziona visivamente sul "manico" (percentuale approssimativa per demo)
                 // Diciamo che il manico visibile va dal tasto 0 al 18
-                let leftPos = (fret / 18) * 100; 
+                let leftPos = (fret / MAX_FRETS) * 100; 
                 noteDiv.style.left = leftPos + '%';
                 
                 stringDiv.appendChild(noteDiv);
@@ -303,7 +351,10 @@
         }
 
         // Avvia subito in DO all'apertura
-        window.onload = renderScale;
+        window.onload = () => {
+            drawFretboardGrid();
+            renderScale();
+        };
 
     </script>
 </body>
