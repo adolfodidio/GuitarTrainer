@@ -125,10 +125,18 @@
     <div class="controls">
         <label>KEY (TONALITÀ): </label>
         <select id="keySelect">
-            <option value="C">C (Do)</option>
-            <option value="F">F (Fa)</option>
-            <option value="G">G (Sol)</option>
-            <option value="Bb">Bb (Sib)</option>
+            <option value="C">C</option>
+            <option value="Db">Db</option>
+            <option value="D">D</option>
+            <option value="Eb">Eb</option>
+            <option value="E">E</option>
+            <option value="F">F</option>
+            <option value="Gb">Gb</option>
+            <option value="G">G</option>
+            <option value="Ab">Ab</option>
+            <option value="A">A</option>
+            <option value="Bb">Bb</option>
+            <option value="B">B</option>
         </select>
         
         <label>SCALE TYPE: </label>
@@ -157,45 +165,86 @@
     <script>
         /* --- LOGICA BARRY HARRIS (JS) --- */
 
-        // Database musicale di base
-        const notes = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+        // Costanti Musicali
+        const NOTES_FLAT = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+        const NOTES_SHARP = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
         
-        // Definizioni intervalli per le scale BH (Semitoni dalla tonica)
-        // Major 6 Dim: 0, 2, 4, 5, 7, 8 (b6), 9 (6), 11 (7) -> NO! Barry usa 8 note.
-        // Barry Major: 1, 2, 3, 4, 5, b6, 6, 7 (Diminuito prende il b6)
-        
-        // Semplifichiamo per la Demo in DO:
-        // C Major 6 Dim Scale: C, D, E, F, G, Ab, A, B
-        // Chords: C6, Ddim7, C6/E, Fdim7, C6/G, Abdim7, C6/A, Bdim7
-        
-        const theoryData = {
-            'C': {
-                major6: [
-                    { name: 'C6', type: 'tonic', notes: 'C-E-G-A', tab: [5,5,5,5] },       // Pos 1
-                    { name: 'Ddim7', type: 'dim', notes: 'D-F-Ab-B', tab: [7,6,7,6] },    // Pos 2
-                    { name: 'C6/E', type: 'tonic', notes: 'E-G-A-C', tab: [8,8,9,7] },    // Pos 3
-                    { name: 'Fdim7', type: 'dim', notes: 'F-Ab-B-D', tab: [10,9,10,9] },  // Pos 4
-                    { name: 'C6/G', type: 'tonic', notes: 'G-A-C-E', tab: [12,13,12,10] },// Pos 5
-                    { name: 'Abdim7', type: 'dim', notes: 'Ab-B-D-F', tab: [13,12,13,12] },// Pos 6
-                    { name: 'C6/A', type: 'tonic', notes: 'A-C-E-G', tab: [15,17,14,14] }, // Pos 7 (Approssimato per drop2)
-                    { name: 'Bdim7', type: 'dim', notes: 'B-D-F-Ab', tab: [16,15,16,15] }  // Pos 8
-                ],
-                minor6: [
-                    { name: 'Cm6', type: 'tonic', notes: 'C-Eb-G-A', tab: [5,4,5,5] },      // Pos 1 (G bass)
-                    { name: 'Ddim7', type: 'dim', notes: 'D-F-Ab-B', tab: [7,6,7,6] },
-                    { name: 'Cm6/Eb', type: 'tonic', notes: 'Eb-G-A-C', tab: [8,8,8,7] },   // Pos 3 (A bass - approx)
-                    { name: 'Fdim7', type: 'dim', notes: 'F-Ab-B-D', tab: [10,9,10,9] },
-                    { name: 'Cm6/G', type: 'tonic', notes: 'G-A-C-Eb', tab: [11,10,12,10] }, // Pos 5 (C bass)
-                    { name: 'Abdim7', type: 'dim', notes: 'Ab-B-D-F', tab: [13,12,13,12] },
-                    { name: 'Cm6/A', type: 'tonic', notes: 'A-C-Eb-G', tab: [15,13,14,13] }, // Pos 7 (Eb bass)
-                    { name: 'Bdim7', type: 'dim', notes: 'B-D-F-Ab', tab: [16,15,16,15] }
-                ]
-            },
-            // Per la demo implementiamo solo C per non fare il codice troppo lungo
-            'F': { major6: [], minor6: [] },
-            'G': { major6: [], minor6: [] },
-            'Bb': { major6: [], minor6: [] }
+        // Intervalli Scale Barry Harris (8 note)
+        const INTERVALS = {
+            major6: [0, 2, 4, 5, 7, 8, 9, 11], // 1, 2, 3, 4, 5, b6, 6, 7
+            minor6: [0, 2, 3, 5, 7, 8, 9, 11]  // 1, 2, b3, 4, 5, b6, 6, 7
         };
+
+        // Forme di Riferimento in DO (C) - Drop 2 (Corde 1-2-3-4)
+        const REF_SHAPES = {
+            major6: [
+                { type: 'tonic', tab: [5,5,5,5], suffix: '6' },       // C6
+                { type: 'dim',   tab: [7,6,7,6], suffix: 'dim7' },    // Ddim7
+                { type: 'tonic', tab: [8,8,9,7], suffix: '6' },       // C6/E
+                { type: 'dim',   tab: [10,9,10,9], suffix: 'dim7' },  // Fdim7
+                { type: 'tonic', tab: [12,13,12,10], suffix: '6' },   // C6/G
+                { type: 'dim',   tab: [13,12,13,12], suffix: 'dim7' },// Abdim7
+                { type: 'tonic', tab: [15,17,14,14], suffix: '6' },   // C6/A
+                { type: 'dim',   tab: [16,15,16,15], suffix: 'dim7' } // Bdim7
+            ],
+            minor6: [
+                { type: 'tonic', tab: [5,4,5,5], suffix: 'm6' },      // Cm6
+                { type: 'dim',   tab: [7,6,7,6], suffix: 'dim7' },    // Ddim7
+                { type: 'tonic', tab: [8,8,8,7], suffix: 'm6' },      // Cm6/Eb
+                { type: 'dim',   tab: [10,9,10,9], suffix: 'dim7' },  // Fdim7
+                { type: 'tonic', tab: [11,10,12,10], suffix: 'm6' },  // Cm6/G
+                { type: 'dim',   tab: [13,12,13,12], suffix: 'dim7' },// Abdim7
+                { type: 'tonic', tab: [15,13,14,13], suffix: 'm6' },  // Cm6/A
+                { type: 'dim',   tab: [16,15,16,15], suffix: 'dim7' } // Bdim7
+            ]
+        };
+
+        function getNoteName(midiIndex, useSharps) {
+            const normalized = (midiIndex % 12 + 12) % 12;
+            return useSharps ? NOTES_SHARP[normalized] : NOTES_FLAT[normalized];
+        }
+
+        function generateChords(rootName, scaleType) {
+            let rootIndex = NOTES_FLAT.indexOf(rootName);
+            if (rootIndex === -1) rootIndex = NOTES_SHARP.indexOf(rootName);
+            
+            // Euristica per diesis/bemolli
+            const useSharps = ['G', 'D', 'A', 'E', 'B', 'F#', 'C#'].includes(rootName);
+            
+            const intervals = INTERVALS[scaleType];
+            const shapes = REF_SHAPES[scaleType];
+            
+            return shapes.map((shape, step) => {
+                // 1. Calcola Nota della Scala
+                const scaleNoteIndex = rootIndex + intervals[step];
+                const scaleNoteName = getNoteName(scaleNoteIndex, useSharps);
+                
+                // 2. Calcola Nome Accordo
+                let name = "";
+                if (shape.type === 'tonic') {
+                    const rootStr = getNoteName(rootIndex, useSharps);
+                    name = (step === 0) ? `${rootStr}${shape.suffix}` : `${rootStr}${shape.suffix}/${scaleNoteName}`;
+                } else {
+                    name = `${scaleNoteName}${shape.suffix}`;
+                }
+                
+                // 3. Calcola Note (Toniche: 1,3,5,6 - Diminuite: 2,4,b6,7)
+                const indices = (shape.type === 'tonic') ? [0, 2, 4, 6] : [1, 3, 5, 7];
+                const notesList = indices.map(i => {
+                    return getNoteName(rootIndex + intervals[i], useSharps);
+                }).join('-');
+                
+                // 4. Calcola Tablatura (Trasposizione)
+                let shift = rootIndex; // C=0
+                // Se l'accordo va troppo in alto (> tasto 19), abbassa di un'ottava
+                const maxFret = Math.max(...shape.tab);
+                if (maxFret + shift > 19) shift -= 12;
+                
+                const tab = shape.tab.map(f => f + shift);
+                
+                return { name, type: shape.type, notes: notesList, tab };
+            });
+        }
 
         function renderScale() {
             const key = document.getElementById('keySelect').value;
@@ -205,17 +254,7 @@
             // Pulisci
             container.innerHTML = '';
             
-            // Check se abbiamo i dati (nella demo c'è solo C)
-            if (key !== 'C') {
-                container.innerHTML = '<div style="grid-column: span 8; padding: 20px;">Hey cat, per questa demo ho codificato solo la tonalità di DO (C) per farti vedere come funziona la logica Drop 2. Seleziona C!</div>';
-                return;
-            }
-
-            const chords = theoryData[key][type];
-            if(!chords || chords.length === 0) {
-                 container.innerHTML = '<div style="grid-column: span 8;">Work in progress, man. Coming soon.</div>';
-                 return;
-            }
+            const chords = generateChords(key, type);
 
             // Genera le card
             chords.forEach((chord, index) => {
