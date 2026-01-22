@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Barry Harris Logic Engine</title>
+    <style>
+        /* --- STILE BEBOP (CSS) --- */
+        :root {
+            --bg-color: #1a1a1a;
+            --text-color: #f0f0f0;
+            --tonic-color: #4CAF50;    /* Verde per la casa/riposo */
+            --dim-color: #FF5722;      /* Arancio per la tensione/diminuito */
+            --key-white: #e0e0e0;
+            --key-black: #333;
+        }
+
+        body {
+            font-family: 'Courier New', monospace; /* Monospaziato come uno spartito */
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 { text-transform: uppercase; letter-spacing: 2px; border-bottom: 2px solid var(--text-color); }
+        .subtitle { font-style: italic; opacity: 0.8; margin-bottom: 30px; }
+
+        /* CONTROLLI */
+        .controls {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #555;
+            border-radius: 8px;
+            background: #252525;
+        }
+
+        select, button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background: var(--key-black);
+            color: var(--text-color);
+            border: 1px solid #555;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        button:hover { background: #444; }
+
+        /* LA GRIGLIA ARMONICA (8 NOTE) */
+        .scale-container {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr); /* 8 steps per la scala BH */
+            gap: 10px;
+            width: 100%;
+            max-width: 1000px;
+            margin-bottom: 40px;
+        }
+
+        .chord-card {
+            background: #333;
+            padding: 15px;
+            text-align: center;
+            border-radius: 4px;
+            border-top: 5px solid #555;
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+
+        .chord-card:hover { transform: translateY(-5px); }
+
+        /* Classi dinamiche per Tensione/Risoluzione */
+        .type-tonic { border-top-color: var(--tonic-color); }
+        .type-dim { border-top-color: var(--dim-color); }
+
+        .chord-name { font-size: 1.2em; font-weight: bold; display: block; margin-bottom: 5px; }
+        .chord-func { font-size: 0.8em; opacity: 0.7; text-transform: uppercase; }
+        .chord-notes { font-size: 0.8em; margin-top: 10px; color: #aaa; }
+
+        /* VISUALIZZATORE CHITARRA (TAB) */
+        .fretboard-display {
+            width: 100%;
+            max-width: 600px;
+            background: #222;
+            padding: 20px;
+            border: 1px solid #444;
+            position: relative;
+        }
+
+        .tab-line {
+            border-bottom: 1px solid #666;
+            height: 25px;
+            position: relative;
+        }
+        
+        .tab-note {
+            position: absolute;
+            background: var(--text-color);
+            color: var(--bg-color);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            text-align: center;
+            line-height: 24px;
+            font-weight: bold;
+            font-size: 12px;
+            top: -12px;
+            z-index: 10;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .scale-container { grid-template-columns: repeat(4, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Bebop Logic Engine</h1>
+    <div class="subtitle">"God's logic on a web page. Dig it."</div>
+
+    <div class="controls">
+        <label>KEY (TONALITÀ): </label>
+        <select id="keySelect">
+            <option value="C">C (Do)</option>
+            <option value="F">F (Fa)</option>
+            <option value="G">G (Sol)</option>
+            <option value="Bb">Bb (Sib)</option>
+        </select>
+        
+        <label>SCALE TYPE: </label>
+        <select id="scaleType">
+            <option value="major6">Major 6 Diminished</option>
+            <option value="minor6">Minor 6 Diminished</option>
+        </select>
+
+        <button onclick="renderScale()">CALCULATE LOGIC</button>
+    </div>
+
+    <div id="scaleGrid" class="scale-container">
+        </div>
+
+    <div class="fretboard-display">
+        <h3>DROP 2 VOICING (Top 4 Strings)</h3>
+        <p id="tab-instruction">Clicca su un accordo sopra per vederlo qui.</p>
+        <div id="tab-visualizer">
+            <div class="tab-line" id="string-e"></div>
+            <div class="tab-line" id="string-b"></div>
+            <div class="tab-line" id="string-g"></div>
+            <div class="tab-line" id="string-d"></div>
+        </div>
+    </div>
+
+    <script>
+        /* --- LOGICA BARRY HARRIS (JS) --- */
+
+        // Database musicale di base
+        const notes = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+        
+        // Definizioni intervalli per le scale BH (Semitoni dalla tonica)
+        // Major 6 Dim: 0, 2, 4, 5, 7, 8 (b6), 9 (6), 11 (7) -> NO! Barry usa 8 note.
+        // Barry Major: 1, 2, 3, 4, 5, b6, 6, 7 (Diminuito prende il b6)
+        
+        // Semplifichiamo per la Demo in DO:
+        // C Major 6 Dim Scale: C, D, E, F, G, Ab, A, B
+        // Chords: C6, Ddim7, C6/E, Fdim7, C6/G, Abdim7, C6/A, Bdim7
+        
+        const theoryData = {
+            'C': {
+                major6: [
+                    { name: 'C6', type: 'tonic', notes: 'C-E-G-A', tab: [5,5,5,5] },       // Pos 1
+                    { name: 'Ddim7', type: 'dim', notes: 'D-F-Ab-B', tab: [7,6,7,6] },    // Pos 2
+                    { name: 'C6/E', type: 'tonic', notes: 'E-G-A-C', tab: [8,8,9,7] },    // Pos 3
+                    { name: 'Fdim7', type: 'dim', notes: 'F-Ab-B-D', tab: [10,9,10,9] },  // Pos 4
+                    { name: 'C6/G', type: 'tonic', notes: 'G-A-C-E', tab: [12,13,12,10] },// Pos 5
+                    { name: 'Abdim7', type: 'dim', notes: 'Ab-B-D-F', tab: [13,12,13,12] },// Pos 6
+                    { name: 'C6/A', type: 'tonic', notes: 'A-C-E-G', tab: [15,17,14,14] }, // Pos 7 (Approssimato per drop2)
+                    { name: 'Bdim7', type: 'dim', notes: 'B-D-F-Ab', tab: [16,15,16,15] }  // Pos 8
+                ],
+                minor6: [
+                    { name: 'Cm6', type: 'tonic', notes: 'C-Eb-G-A', tab: [5,4,5,5] },      
+                    { name: 'Ddim7', type: 'dim', notes: 'D-F-Ab-B', tab: [7,6,7,6] },
+                    { name: 'Cm6/Eb', type: 'tonic', notes: 'Eb-G-A-C', tab: [8,8,8,7] }, 
+                    // ... altri accordi verrebbero calcolati qui
+                ]
+            },
+            // Per la demo implementiamo solo C per non fare il codice troppo lungo
+            'F': { major6: [], minor6: [] },
+            'G': { major6: [], minor6: [] },
+            'Bb': { major6: [], minor6: [] }
+        };
+
+        function renderScale() {
+            const key = document.getElementById('keySelect').value;
+            const type = document.getElementById('scaleType').value;
+            const container = document.getElementById('scaleGrid');
+            
+            // Pulisci
+            container.innerHTML = '';
+            
+            // Check se abbiamo i dati (nella demo c'è solo C)
+            if (key !== 'C') {
+                container.innerHTML = '<div style="grid-column: span 8; padding: 20px;">Hey cat, per questa demo ho codificato solo la tonalità di DO (C) per farti vedere come funziona la logica Drop 2. Seleziona C!</div>';
+                return;
+            }
+
+            const chords = theoryData[key][type];
+            if(!chords || chords.length === 0) {
+                 container.innerHTML = '<div style="grid-column: span 8;">Work in progress, man. Coming soon.</div>';
+                 return;
+            }
+
+            // Genera le card
+            chords.forEach((chord, index) => {
+                const card = document.createElement('div');
+                card.className = `chord-card type-${chord.type}`;
+                card.innerHTML = `
+                    <span class="chord-func">${chord.type === 'tonic' ? 'Home' : 'Tension'}</span>
+                    <span class="chord-name">${chord.name}</span>
+                    <div class="chord-notes">${chord.notes}</div>
+                `;
+                
+                // Evento click per la tablatura
+                card.onclick = () => showTab(chord);
+                
+                container.appendChild(card);
+            });
+        }
+
+        function showTab(chord) {
+            document.getElementById('tab-instruction').innerText = `Visualizzando: ${chord.name} (Drop 2 - Corde 1,2,3,4)`;
+            
+            // Tab array order: E(1), B(2), G(3), D(4)
+            // Nel JS sopra ho messo l'ordine [E, B, G, D]
+            
+            const strings = ['string-e', 'string-b', 'string-g', 'string-d'];
+            
+            // Pulisci vecchie note
+            strings.forEach(id => {
+                document.getElementById(id).innerHTML = ''; 
+            });
+
+            // Disegna nuove note
+            chord.tab.forEach((fret, index) => {
+                const stringDiv = document.getElementById(strings[index]);
+                const noteDiv = document.createElement('div');
+                noteDiv.className = 'tab-note';
+                noteDiv.innerText = fret;
+                
+                // Posiziona visivamente sul "manico" (percentuale approssimativa per demo)
+                // Diciamo che il manico visibile va dal tasto 0 al 18
+                let leftPos = (fret / 18) * 100; 
+                noteDiv.style.left = leftPos + '%';
+                
+                stringDiv.appendChild(noteDiv);
+            });
+        }
+
+        // Avvia subito in DO all'apertura
+        window.onload = renderScale;
+
+    </script>
+</body>
+</html>
