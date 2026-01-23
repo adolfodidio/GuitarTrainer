@@ -38,16 +38,6 @@
             background: #252525;
         }
 
-        /* NAVIGAZIONE STANZE */
-        .nav-bar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .nav-btn { background: #444; border: 1px solid #666; opacity: 0.6; }
-        .nav-btn.active { background: var(--tonic-color); color: white; opacity: 1; border-color: white; }
-        .room-section { display: none; width: 100%; display: flex; flex-direction: column; align-items: center; }
-
         select, button {
             padding: 10px 20px;
             font-size: 16px;
@@ -129,7 +119,7 @@
         .fret-line {
             position: absolute;
             top: 0;
-            height: 150px; /* 6 corde * 25px */
+            height: 100px; /* 4 corde * 25px */
             width: 1px;
             background: #333;
             z-index: 0;
@@ -154,15 +144,7 @@
     <h1>Bebop Logic Engine</h1>
     <div class="subtitle">"God's logic on a web page. Dig it."</div>
 
-    <!-- NAVIGAZIONE -->
-    <div class="nav-bar">
-        <button onclick="openRoom(1)" id="btn-room-1" class="nav-btn active">STANZA 1: Logic Engine</button>
-        <button onclick="openRoom(2)" id="btn-room-2" class="nav-btn">STANZA 2: Family Finder</button>
-    </div>
-
-    <!-- STANZA 1: LOGIC ENGINE -->
-    <div id="room-1" class="room-section" style="display: flex;">
-        <div class="controls">
+    <div class="controls">
         <label>KEY (TONALITÀ): </label>
         <select id="keySelect">
             <option value="C">C</option>
@@ -185,20 +167,49 @@
             <option value="minor6">Minor 6 Diminished</option>
         </select>
 
+        <label>STRING SET: </label>
+        <select id="stringSet">
+            <option value="top">Top 4 (1-2-3-4)</option>
+            <option value="middle">Middle 4 (2-3-4-5)</option>
+            <option value="bottom">Bottom 4 (3-4-5-6)</option>
+        </select>
+
         <button onclick="renderScale()">CALCULATE LOGIC</button>
     </div>
 
     <div id="scaleGrid" class="scale-container">
         </div>
+    </div>
+
+    <!-- STANZA 2: FAMILY FINDER -->
+    <div id="room-2" class="room-section">
+        <div class="controls" style="border-color: var(--dim-color);">
+            <h3 style="margin-top:0; color: var(--dim-color);">IL RADAR DEI PARENTI</h3>
+            <p style="font-size: 0.8em; max-width: 600px; margin-bottom: 20px;">
+                Seleziona un accordo Diminuito (Genitore). Il sistema mostrerà i 4 accordi Dominanti (Figli) generati abbassando una singola nota.
+            </p>
+            <label>DIMINISHED PARENT: </label>
+            <select id="dimSelect">
+                <!-- Popolato via JS -->
+            </select>
+            <button onclick="renderFamily()">TROVA PARENTI</button>
+        </div>
+
+        <div id="familyGrid" class="scale-container" style="grid-template-columns: repeat(5, 1fr);">
+            <!-- Griglia Famiglia -->
+        </div>
+    </div>
 
     <div class="fretboard-display">
-        <h3>DROP 2 VOICING (Top 4 Strings)</h3>
+        <h3>VISUALIZZATORE (Drop 2)</h3>
         <p id="tab-instruction">Clicca su un accordo sopra per vederlo qui.</p>
         <div id="tab-visualizer">
             <div class="tab-line" id="string-e"></div>
             <div class="tab-line" id="string-b"></div>
             <div class="tab-line" id="string-g"></div>
             <div class="tab-line" id="string-d"></div>
+            <div class="tab-line" id="string-a"></div>
+            <div class="tab-line" id="string-E"></div>
         </div>
     </div>
 
@@ -241,7 +252,7 @@
             ]
         };
 
-        // Configurazione Set Corde (Mancante nel codice precedente)
+        // Configurazione Set Corde
         const STRING_SETS = {
             top:    { name: "Top 4 (1-2-3-4)",    strings: ['string-e', 'string-b', 'string-g', 'string-d'], offsets: [0, 0, 0, 0],    midiBase: [64, 59, 55, 50] },
             middle: { name: "Middle 4 (2-3-4-5)", strings: ['string-b', 'string-g', 'string-d', 'string-a'], offsets: [5, 4, 5, 5],    midiBase: [59, 55, 50, 45] },
@@ -371,6 +382,58 @@
             });
         }
 
+        function drawFretboardGrid() {
+            const visualizer = document.getElementById('tab-visualizer');
+            if(visualizer.querySelector('.fret-number')) return; // Già disegnata
+
+            for (let i = 0; i <= MAX_FRETS; i++) {
+                const left = (i / MAX_FRETS) * 100;
+                
+                // Linea tasto (escluso capotasto 0 se si vuole, ma mettiamolo per riferimento)
+                if (i > 0) {
+                    const line = document.createElement('div');
+                    line.className = 'fret-line';
+                    line.style.left = `${left}%`;
+                    visualizer.appendChild(line);
+                }
+                
+                // Numero tasto
+                const num = document.createElement('div');
+                num.className = 'fret-number';
+                num.innerText = i;
+                num.style.left = `${left}%`;
+                visualizer.appendChild(num);
+            }
+        }
+
+        function showTab(chord) {
+            const setKey = document.getElementById('stringSet').value;
+            const currentSet = STRING_SETS[setKey];
+
+            document.getElementById('tab-instruction').innerText = `Visualizzando: ${chord.name} (${currentSet.name})`;
+            
+            // Pulisci tutte le corde
+            const allStrings = ['string-e', 'string-b', 'string-g', 'string-d', 'string-a', 'string-E'];
+            allStrings.forEach(id => document.getElementById(id).innerHTML = '');
+            
+            // Disegna nuove note
+            const activeStrings = currentSet.strings;
+
+            chord.tab.forEach((fret, index) => {
+                const stringDiv = document.getElementById(activeStrings[index]);
+                const noteDiv = document.createElement('div');
+                noteDiv.className = 'tab-note';
+                noteDiv.innerText = fret;
+                
+                // Posiziona visivamente sul "manico" (percentuale approssimativa per demo)
+                // Diciamo che il manico visibile va dal tasto 0 al 18
+                let leftPos = (fret / MAX_FRETS) * 100; 
+                noteDiv.style.left = leftPos + '%';
+                
+                stringDiv.appendChild(noteDiv);
+            });
+        }
+
         /* --- LOGICA STANZA 2: FAMILY FINDER --- */
         function renderFamily() {
             const parentName = document.getElementById('dimSelect').value;
@@ -378,10 +441,6 @@
             container.innerHTML = '';
 
             // 1. Trova/Genera l'accordo Diminuito Genitore
-            // Usiamo la logica di generateChords ma forziamo un accordo diminuito
-            // Trucco: generiamo una scala minor6 su quella tonica e prendiamo il 2° grado (che è dim7)
-            // Oppure costruiamolo manualmente per essere più diretti.
-            
             // Prendiamo la forma base di Ddim7 (Drop 2 top strings): [7,6,7,6]
             // D è index 2.
             let rootIndex = NOTES_FLAT.indexOf(parentName);
@@ -447,68 +506,6 @@
             `;
             card.onclick = () => { showTab(chord); playChord(chord); };
             container.appendChild(card);
-        }
-
-        function drawFretboardGrid() {
-            const visualizer = document.getElementById('tab-visualizer');
-            if(visualizer.querySelector('.fret-number')) return; // Già disegnata
-
-            for (let i = 0; i <= MAX_FRETS; i++) {
-                const left = (i / MAX_FRETS) * 100;
-                
-                // Linea tasto (escluso capotasto 0 se si vuole, ma mettiamolo per riferimento)
-                if (i > 0) {
-                    const line = document.createElement('div');
-                    line.className = 'fret-line';
-                    line.style.left = `${left}%`;
-                    visualizer.appendChild(line);
-                }
-                
-                // Numero tasto
-                const num = document.createElement('div');
-                num.className = 'fret-number';
-                num.innerText = i;
-                num.style.left = `${left}%`;
-                visualizer.appendChild(num);
-            }
-        }
-
-        function showTab(chord) {
-            const setKey = document.getElementById('stringSet').value;
-            const currentSet = STRING_SETS[setKey];
-
-            document.getElementById('tab-instruction').innerText = `Visualizzando: ${chord.name} (${currentSet.name})`;
-            
-            // Pulisci tutte le corde
-            const allStrings = ['string-e', 'string-b', 'string-g', 'string-d', 'string-a', 'string-E'];
-            allStrings.forEach(id => document.getElementById(id).innerHTML = '');
-            
-            // Disegna nuove note
-            const activeStrings = currentSet.strings;
-
-            chord.tab.forEach((fret, index) => {
-                const stringDiv = document.getElementById(activeStrings[index]);
-                const noteDiv = document.createElement('div');
-                noteDiv.className = 'tab-note';
-                noteDiv.innerText = fret;
-                
-                // Posiziona visivamente sul "manico" (percentuale approssimativa per demo)
-                // Diciamo che il manico visibile va dal tasto 0 al 18
-                let leftPos = (fret / MAX_FRETS) * 100; 
-                noteDiv.style.left = leftPos + '%';
-                
-                stringDiv.appendChild(noteDiv);
-            });
-        }
-
-        function openRoom(roomId) {
-            // Nascondi tutto
-            document.querySelectorAll('.room-section').forEach(el => el.style.display = 'none');
-            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-            
-            // Mostra target
-            document.getElementById(`room-${roomId}`).style.display = 'flex';
-            document.getElementById(`btn-room-${roomId}`).classList.add('active');
         }
 
         // Avvia subito in DO all'apertura
