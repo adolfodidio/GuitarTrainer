@@ -117,7 +117,7 @@
             height: 24px;
             text-align: center;
             line-height: 24px;
-            font-weight: bold;
+            font-weight: normal; /* Ridotto per far spazio a testi come 'b3' */
             font-size: 12px;
             top: 25px; /* Posiziona la nota sulla linea di corda (border-bottom) */
             transform: translateY(-50%); /* Centra verticalmente sulla linea */
@@ -533,6 +533,18 @@
                 return useSharps ? this.NOTES_SHARP[normalized] : this.NOTES_FLAT[normalized];
             },
 
+            calculateChordIntervals: function(tab, rootNoteIndex, stringSetKey) {
+                const intervalNames = ['1', 'b2', '2', 'b3', '3', '4', 'b5', '5', 'b6', '6', 'b7', '7'];
+                const currentSet = this.STRING_SETS[stringSetKey];
+                
+                return tab.map((fret, i) => {
+                    if (fret === null || fret === undefined) return '';
+                    const noteMidi = currentSet.midiBase[i] + fret;
+                    const intervalValue = (noteMidi - rootNoteIndex + 12) % 12;
+                    return intervalNames[intervalValue];
+                });
+            },
+
             // --- Metodi Audio ---
             playChord: function(chord) { // Per accordi
                 if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
@@ -611,8 +623,8 @@
                 chord.tab.forEach((fret, index) => {
                     const stringDiv = document.getElementById(activeStrings[index]);
                     const noteDiv = document.createElement('div');
-                    noteDiv.className = 'tab-note';
-                    noteDiv.innerText = fret;
+                    noteDiv.className = 'tab-note'; 
+                    noteDiv.innerText = chord.intervals ? chord.intervals[index] : fret; // Usa l'intervallo se disponibile
                     if (highlightNotes.includes(index)) {
                         noteDiv.classList.add('playing'); // Usiamo la classe 'playing' per evidenziare
                     }
@@ -658,7 +670,10 @@
                     
                     const tab = shapeWithSetOffset.map(f => f + shift); // La logica di trasposizione rimane
                     
-                    return { name, type: shape.type, notes: notesList, tab };
+                    let chordRootNoteIndex = (shape.type === 'tonic') ? rootIndex : scaleNoteIndex;
+                    const intervalsArray = this.calculateChordIntervals(tab, chordRootNoteIndex, this.settings.stringSet);
+
+                    return { name, type: shape.type, notes: notesList, tab, intervals: intervalsArray };
                 });
             },
 
@@ -732,18 +747,21 @@
                 if (Math.max(...parentTab) > 18) parentTab = parentTab.map(f => f - 12);
                 if (Math.min(...parentTab) < 0) parentTab = parentTab.map(f => f + 12);
 
-                const parentChord = { name: parentName + "dim7", type: 'dim', notes: "Parent", tab: parentTab };
+                const parentIntervals = this.calculateChordIntervals(parentTab, rootIndex, this.settings.stringSet);
+                const parentChord = { name: parentName + "dim7", type: 'dim', notes: "Parent", tab: parentTab, intervals: parentIntervals };
                 this.createFamilyCard(parentChord, container, true);
 
                 for(let i=0; i<4; i++) {
                     const childTab = [...parentTab];
                     childTab[i] = childTab[i] - 1;
 
+                    const childChordRootMidi = this.STRING_SETS[this.settings.stringSet].midiBase[i] + childTab[i];
+                    const childChordRootIndex = childChordRootMidi % 12;
                     const stringMidiBase = currentSet.midiBase[i];
-                    const noteMidi = stringMidiBase + childTab[i];
-                    const noteName = this.getNoteName(noteMidi, true);
+                    const noteName = this.getNoteName(childChordRootMidi, true);
                     
-                    const childChord = { name: noteName + "7", type: 'tonic', notes: `String ${i+1} lowered`, tab: childTab };
+                    const childIntervals = this.calculateChordIntervals(childTab, childChordRootIndex, this.settings.stringSet);
+                    const childChord = { name: noteName + "7", type: 'tonic', notes: `String ${i+1} lowered`, tab: childTab, intervals: childIntervals };
                     this.createFamilyCard(childChord, container, false);
                 }
             },
