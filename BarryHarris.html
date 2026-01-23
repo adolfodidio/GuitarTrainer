@@ -120,7 +120,7 @@
             font-weight: normal; /* Ridotto per far spazio a testi come 'b3' */
             font-size: 12px;
             top: 25px; /* Posiziona la nota sulla linea di corda (border-bottom) */
-            transform: translateY(-50%); /* Centra verticalmente sulla linea */
+            transform: translate(-50%, -50%); /* Centra verticalmente e orizzontalmente */
             z-index: 10;
         }
         
@@ -130,8 +130,8 @@
         }
         .fret-line {
             position: absolute;
-            top: 0;
-            height: 150px; /* 6 corde * 25px */
+            top: 12px; /* Sporge meno sopra la prima corda */
+            height: 138px; /* Altezza ridotta per compensare il top */
             width: 1px;
             background: #333;
             z-index: 0;
@@ -599,19 +599,21 @@
                 if(visualizer.querySelector('.fret-number')) return;
 
                 for (let i = 0; i <= this.MAX_FRETS; i++) {
-                    const left = (i / this.MAX_FRETS) * 100;
-                    
+                    const fretLineLeft = (i / this.MAX_FRETS) * 100;
+
                     if (i > 0) {
                         const line = document.createElement('div');
                         line.className = 'fret-line';
-                        line.style.left = `${left}%`;
+                        line.style.left = `${fretLineLeft}%`;
                         visualizer.appendChild(line);
                     }
                     
+                    // Per il numero del tasto, lo centriamo nello spazio del tasto (tra i-1 e i)
+                    const numLeft = (i > 0) ? ((i - 0.5) / this.MAX_FRETS) * 100 : 0;
                     const num = document.createElement('div');
                     num.className = 'fret-number';
                     num.innerText = i;
-                    num.style.left = `${left}%`;
+                    num.style.left = `${numLeft}%`;
                     visualizer.appendChild(num);
                 }
             },
@@ -633,7 +635,8 @@
                         noteDiv.classList.add('playing'); // Usiamo la classe 'playing' per evidenziare
                     }
                     
-                    let leftPos = (fret / this.MAX_FRETS) * 100; 
+                    // Centra la nota nello spazio tra i fret
+                    let leftPos = ((fret - 0.5) / this.MAX_FRETS) * 100; 
                     noteDiv.style.left = leftPos + '%';
                     
                     stringDiv.appendChild(noteDiv);
@@ -1090,7 +1093,8 @@
                     noteDiv.id = `lick-note-${index}`; // ID per animazione
                     noteDiv.innerText = index + 1; // Mostra il numero della nota nella sequenza
                     
-                    let leftPos = (note.fret / this.MAX_FRETS) * 100; 
+                    // Centra la nota nello spazio tra i fret
+                    let leftPos = ((note.fret - 0.5) / this.MAX_FRETS) * 100; 
                     noteDiv.style.left = leftPos + '%';
                     
                     stringDiv.appendChild(noteDiv);
