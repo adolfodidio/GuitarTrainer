@@ -64,7 +64,7 @@
         /* LA GRIGLIA ARMONICA (8 NOTE) */
         .scale-container {
             display: grid;
-            grid-template-columns: repeat(8, 1fr); /* 8 steps per la scala BH */
+            grid-template-columns: repeat(9, 1fr); /* 9 steps per la scala BH (con ottava) */
             gap: 10px;
             width: 100%;
             max-width: 1000px;
@@ -342,8 +342,8 @@
             NOTES_FLAT: ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'],
             NOTES_SHARP: ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'],
             INTERVALS: {
-                major6: [0, 2, 4, 5, 7, 8, 9, 11], // 1, 2, 3, 4, 5, b6, 6, 7
-                minor6: [0, 2, 3, 5, 7, 8, 9, 11]  // 1, 2, b3, 4, 5, b6, 6, 7
+                major6: [0, 2, 4, 5, 7, 8, 9, 11, 12], // 1, 2, 3, 4, 5, b6, 6, 7, 8
+                minor6: [0, 2, 3, 5, 7, 8, 9, 11, 12]  // 1, 2, b3, 4, 5, b6, 6, 7, 8
             },
             MAX_FRETS: 20,
             REF_SHAPES: {
@@ -364,7 +364,9 @@
                     // C6/A
                     { type: 'tonic', tabs: [[15,17,14,14], [17,17,17,17], [20,20,21,19], [24,25,24,22]], suffix: '6' },
                     // Bdim7
-                    { type: 'dim',   tabs: [[16,15,16,15], [19,18,19,18], [22,21,22,21], [25,24,25,24]], suffix: 'dim7' }
+                    { type: 'dim',   tabs: [[16,15,16,15], [19,18,19,18], [22,21,22,21], [25,24,25,24]], suffix: 'dim7' },
+                    // C6 (Octave)
+                    { type: 'tonic', tabs: [[17,17,17,17], [20,20,21,19], [24,25,24,22], [27,29,26,26]], suffix: '6' }
                 ],
                 minor6: [
                     // Cm6 Inversions
@@ -382,7 +384,9 @@
                     // Cm6/A
                     { type: 'tonic', tabs: [[15,13,14,13], [16,17,16,15], [20,20,20,19], [23,22,24,22]], suffix: 'm6' },
                     // Bdim7
-                    { type: 'dim',   tabs: [[16,15,16,15], [19,18,19,18], [22,21,22,21], [25,24,25,24]], suffix: 'dim7' }
+                    { type: 'dim',   tabs: [[16,15,16,15], [19,18,19,18], [22,21,22,21], [25,24,25,24]], suffix: 'dim7' },
+                    // Cm6 (Octave)
+                    { type: 'tonic', tabs: [[17,16,17,17], [20,20,20,19], [23,22,24,22], [27,25,26,25]], suffix: 'm6' }
                 ]
             },
             STRING_SETS: {
@@ -660,7 +664,7 @@
                     let name = "";
                     if (shape.type === 'tonic') {
                         const rootStr = this.getNoteName(rootIndex, useSharps);
-                        name = (step === 0) ? `${rootStr}${shape.suffix}` : `${rootStr}${shape.suffix}/${scaleNoteName}`;
+                        name = (step === 0 || step === 8) ? `${rootStr}${shape.suffix}` : `${rootStr}${shape.suffix}/${scaleNoteName}`;
                     } else {
                         name = `${scaleNoteName}${shape.suffix}`;
                     }
