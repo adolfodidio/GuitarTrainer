@@ -270,6 +270,44 @@
             });
         }
 
+        let audioCtx;
+
+        function playChord(chord) {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            // Ordine corde nell'array tab: [E cantino, B, G, D]
+            // MIDI base: E4=64, B3=59, G3=55, D3=50
+            const baseMidi = [64, 59, 55, 50];
+            const now = audioCtx.currentTime;
+
+            chord.tab.forEach((fret, index) => {
+                const midi = baseMidi[index] + fret;
+                const freq = 440 * Math.pow(2, (midi - 69) / 12);
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'triangle'; // Suono morbido
+                osc.frequency.setValueAtTime(freq, now);
+
+                // Envelope per simulare il pizzico
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(0.1, now + 0.05); 
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 2.0);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(now);
+                osc.stop(now + 2.0);
+            });
+        }
+
         function renderScale() {
             const key = document.getElementById('keySelect').value;
             const type = document.getElementById('scaleType').value;
@@ -291,7 +329,10 @@
                 `;
                 
                 // Evento click per la tablatura
-                card.onclick = () => showTab(chord);
+                card.onclick = () => {
+                    showTab(chord);
+                    playChord(chord);
+                };
                 
                 container.appendChild(card);
             });
