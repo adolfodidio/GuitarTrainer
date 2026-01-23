@@ -11,6 +11,7 @@
             --text-color: #f0f0f0;
             --tonic-color: #4CAF50;    /* Verde per la casa/riposo */
             --dim-color: #FF5722;      /* Arancio per la tensione/diminuito */
+            --lick-color: #2196F3;     /* Blu per i lick */
             --key-white: #e0e0e0;
             --key-black: #333;
         }
@@ -136,11 +137,17 @@
         }
         .fret-number {
             position: absolute;
-            top: 105px;
+            top: 155px; /* Sotto la 6a corda */
             transform: translateX(-50%);
             font-size: 10px;
             color: #666;
             font-family: sans-serif;
+        }
+
+        .tab-note.playing {
+            transform: scale(1.2) translateY(-2px);
+            box-shadow: 0 0 20px #fff;
+            background-color: var(--lick-color);
         }
 
         /* Responsive */
@@ -189,6 +196,7 @@
         <button onclick="BarryHarrisApp.openRoom(2)" id="btn-room-2" class="nav-btn">STANZA 2: Family Finder</button>
         <button onclick="BarryHarrisApp.openRoom(3)" id="btn-room-3" class="nav-btn">STANZA 3: Rhythm Boss</button>
         <button onclick="BarryHarrisApp.openRoom(4)" id="btn-room-4" class="nav-btn">STANZA 4: Sing It</button>
+        <button onclick="BarryHarrisApp.openRoom(5)" id="btn-room-5" class="nav-btn">STANZA 5: Lick Library</button>
     </div>
 
     <!-- STANZA 1: LOGIC ENGINE -->
@@ -290,6 +298,25 @@
         <div id="singing-error-msg" class="error-popup">If you can't sing it,<br>you can't play it.<br><span style="font-size:0.7em; font-weight:normal;">Try again.</span></div>
     </div>
 
+    <!-- STANZA 5: LICK LIBRARY -->
+    <div id="room-5" class="room-section">
+        <div class="controls" style="border-color: var(--lick-color);">
+            <h3 style="margin-top:0; color: var(--lick-color);">THE LICK LIBRARY</h3>
+            <p style="font-size: 0.8em; max-width: 600px; margin-bottom: 20px;">
+                Seleziona un lick dalla libreria per vederlo sulla tastiera e ascoltarlo.
+            </p>
+            <label>SELECT LICK: </label>
+            <select id="lickSelect" onchange="BarryHarrisApp.displayLick()">
+                <!-- Popolato via JS -->
+            </select>
+            <button onclick="BarryHarrisApp.playSelectedLick()" style="border-color: var(--lick-color); color: var(--lick-color);">PLAY LICK</button>
+        </div>
+        <div id="lickInfo" style="margin-top: 20px; max-width: 600px; text-align: center;">
+            <h4 id="lickName" style="margin:0; color: var(--lick-color);"></h4>
+            <p id="lickDescription" style="font-size: 0.9em; color: #ccc;"></p>
+        </div>
+    </div>
+
     <div class="fretboard-display">
         <h3>VISUALIZZATORE (Drop 2)</h3>
         <p id="tab-instruction">Clicca su un accordo sopra per vederlo qui.</p>
@@ -341,6 +368,39 @@
                 middle: { name: "Middle 4 (2-3-4-5)", strings: ['string-b', 'string-g', 'string-d', 'string-a'], offsets: [5, 4, 5, 5],    midiBase: [59, 55, 50, 45] },
                 bottom: { name: "Bottom 4 (3-4-5-6)", strings: ['string-g', 'string-d', 'string-a', 'string-E'], offsets: [9, 9, 10, 10],  midiBase: [55, 50, 45, 40] }
             },
+            LICK_LIBRARY: {
+                'parker_blues_c': {
+                    name: "Parker's Blues Lick",
+                    description: "Un classico lick blues di Charlie Parker su un C7. Le note sono G, E, G, E, Gb, F, E, Eb, C.",
+                    sequence: [
+                        { fret: 8, stringIndex: 1 }, // G on B string
+                        { fret: 5, stringIndex: 1 }, // E on B string
+                        { fret: 8, stringIndex: 1 }, // G on B string
+                        { fret: 5, stringIndex: 1 }, // E on B string
+                        { fret: 4, stringIndex: 2 }, // Gb on G string
+                        { fret: 3, stringIndex: 2 }, // F on G string
+                        { fret: 2, stringIndex: 2 }, // E on G string
+                        { fret: 1, stringIndex: 2 }, // Eb on G string
+                        { fret: 5, stringIndex: 3 }, // C on D string
+                    ],
+                    bpm: 160,
+                    stringSet: 'top' // This lick is designed for this set
+                },
+                'parker_maj7_c': {
+                    name: "Parker's Major 7 Lick",
+                    description: "Una discesa cromatica sulla 7a maggiore, tipica di Parker. Suona bene su Cmaj7. Note: C, B, Bb, A, Ab, G.",
+                    sequence: [
+                        { fret: 8, stringIndex: 0 }, // C on high-e string
+                        { fret: 7, stringIndex: 0 }, // B
+                        { fret: 6, stringIndex: 0 }, // Bb
+                        { fret: 5, stringIndex: 0 }, // A
+                        { fret: 9, stringIndex: 1 }, // Ab on B-string
+                        { fret: 8, stringIndex: 1 }, // G on B-string
+                    ],
+                    bpm: 140,
+                    stringSet: 'top'
+                }
+            },
 
             // --- Stato dell'Applicazione ---
             audioCtx: null,
@@ -376,7 +436,7 @@
             init: function() {
                 this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 
-                // Popola i menu
+                // Popola menu Diminuito (Stanza 2)
                 const dimSelect = document.getElementById('dimSelect');
                 this.NOTES_FLAT.forEach(n => {
                     const opt = document.createElement('option');
@@ -386,14 +446,30 @@
                 });
                 dimSelect.value = "C";
 
+                // Popola menu Lick (Stanza 5)
+                this.populateLicks();
+
                 // Aggiungi event listeners per aggiornare le impostazioni
-                document.getElementById('keySelect').addEventListener('change', (e) => this.settings.key = e.target.value);
-                document.getElementById('scaleType').addEventListener('change', (e) => this.settings.scaleType = e.target.value);
-                document.getElementById('stringSet').addEventListener('change', (e) => this.settings.stringSet = e.target.value);
+                document.getElementById('keySelect').addEventListener('change', (e) => {
+                    this.settings.key = e.target.value;
+                    if (this.currentRoom === 1) this.renderScale(); // Re-render scale if in Logic Engine
+                    if (this.currentRoom === 4) this.startSingingGame(); // Re-start singing game if in Sing It
+                });
+                document.getElementById('scaleType').addEventListener('change', (e) => {
+                    this.settings.scaleType = e.target.value;
+                    if (this.currentRoom === 1) this.renderScale(); // Re-render scale if in Logic Engine
+                    if (this.currentRoom === 4) this.startSingingGame(); // Re-start singing game if in Sing It
+                });
+                document.getElementById('stringSet').addEventListener('change', (e) => {
+                    this.settings.stringSet = e.target.value;
+                    if (this.currentRoom === 1) this.renderScale(); // Re-render scale if in Logic Engine
+                    if (this.currentRoom === 2) this.renderFamily(); // Re-render family if in Family Finder
+                    if (this.currentRoom === 5) this.displayLick(); // Re-display lick if in Lick Library
+                });
 
                 this.drawFretboardGrid();
-                this.renderScale();
-                this.openRoom(1);
+                this.renderScale(); // Initial render for Stanza 1
+                this.openRoom(1); // Open Stanza 1 by default
             },
 
             openRoom: function(roomId) {
@@ -405,18 +481,28 @@
                 
                 document.getElementById(`room-${roomId}`).style.display = 'flex';
                 document.getElementById(`btn-room-${roomId}`).classList.add('active');
+
+                // Specific actions when opening a room
+                if (roomId === 1) {
+                    this.renderScale();
+                } else if (roomId === 2) {
+                    this.renderFamily();
+                } else if (roomId === 5) {
+                    this.displayLick();
+                }
             },
 
             stopAllActivities: function() {
                 // Ferma Metronomo (Stanza 3)
                 if (this.metronome.isOn) {
-                    this.toggleMetronome();
+                    this.toggleMetronome(); // This will stop it
                 }
                 // Ferma Pitch Detection (Stanza 4)
                 this.singing.isActive = false;
 
                 // Chiudi stream microfono se non più necessario
-                if (this.micStream && this.currentRoom !== 3 && this.currentRoom !== 4) {
+                // Only stop mic stream if it's active and we're moving away from rooms 3 or 4
+                if (this.micStream && ![3, 4].includes(this.currentRoom)) {
                     this.micStream.getTracks().forEach(track => track.stop());
                     this.micStream = null;
                     this.micAnalyser = null;
@@ -430,7 +516,7 @@
             },
 
             // --- Metodi Audio ---
-            playChord: function(chord) {
+            playChord: function(chord) { // Per accordi
                 if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
 
                 const currentSet = this.STRING_SETS[this.settings.stringSet];
@@ -459,6 +545,20 @@
                 });
             },
 
+            playSingleMidiNote: function(midi, time, duration) { // Per note singole (lick, metronomo)
+                const freq = 440 * Math.pow(2, (midi - 69) / 12);
+                const osc = this.audioCtx.createOscillator();
+                const gain = this.audioCtx.createGain();
+                osc.type = 'sine'; // Suono più pulito per note singole
+                osc.frequency.setValueAtTime(freq, time);
+                gain.gain.setValueAtTime(0.2, time);
+                gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+                osc.connect(gain);
+                gain.connect(this.audioCtx.destination);
+                osc.start(time);
+                osc.stop(time + duration);
+            },
+
             // --- Metodi UI ---
             drawFretboardGrid: function() {
                 const visualizer = document.getElementById('tab-visualizer');
@@ -482,7 +582,7 @@
                 }
             },
 
-            showTab: function(chord) {
+            showTab: function(chord, highlightNotes = []) {
                 const currentSet = this.STRING_SETS[this.settings.stringSet];
                 document.getElementById('tab-instruction').innerText = `Visualizzando: ${chord.name} (${currentSet.name})`;
                 
@@ -495,6 +595,9 @@
                     const noteDiv = document.createElement('div');
                     noteDiv.className = 'tab-note';
                     noteDiv.innerText = fret;
+                    if (highlightNotes.includes(index)) {
+                        noteDiv.classList.add('playing'); // Usiamo la classe 'playing' per evidenziare
+                    }
                     
                     let leftPos = (fret / this.MAX_FRETS) * 100; 
                     noteDiv.style.left = leftPos + '%';
@@ -904,7 +1007,79 @@
                 let b = (x3 - x1) / 2;
                 if (a) T0 = T0 - b / (2 * a);
                 return sampleRate / T0;
-            }
+            },
+
+            // --- STANZA 5: LICK LIBRARY ---
+            populateLicks: function() {
+                const select = document.getElementById('lickSelect');
+                select.innerHTML = '';
+                for (const key in this.LICK_LIBRARY) {
+                    const lick = this.LICK_LIBRARY[key];
+                    const opt = document.createElement('option');
+                    opt.value = key;
+                    opt.innerText = lick.name;
+                    select.appendChild(opt);
+                }
+            },
+
+            displayLick: function() {
+                const lickKey = document.getElementById('lickSelect').value;
+                const lick = this.LICK_LIBRARY[lickKey];
+                if (!lick) return;
+
+                document.getElementById('lickName').innerText = lick.name;
+                document.getElementById('lickDescription').innerText = lick.description;
+
+                const allStrings = ['string-e', 'string-b', 'string-g', 'string-d', 'string-a', 'string-E'];
+                allStrings.forEach(id => document.getElementById(id).innerHTML = '');
+                
+                // Aggiorna il selettore del set di corde nella Stanza 1 per coerenza
+                this.settings.stringSet = lick.stringSet;
+                document.getElementById('stringSet').value = lick.stringSet;
+                const currentSet = this.STRING_SETS[lick.stringSet];
+
+                document.getElementById('tab-instruction').innerText = `Visualizzando: ${lick.name} (${currentSet.name})`;
+
+                lick.sequence.forEach((note, index) => {
+                    const stringId = currentSet.strings[note.stringIndex];
+                    const stringDiv = document.getElementById(stringId);
+                    const noteDiv = document.createElement('div');
+                    noteDiv.className = 'tab-note';
+                    noteDiv.id = `lick-note-${index}`; // ID per animazione
+                    noteDiv.innerText = index + 1; // Mostra il numero della nota nella sequenza
+                    
+                    let leftPos = (note.fret / this.MAX_FRETS) * 100; 
+                    noteDiv.style.left = leftPos + '%';
+                    
+                    stringDiv.appendChild(noteDiv);
+                });
+            },
+
+            playSelectedLick: async function() {
+                const lickKey = document.getElementById('lickSelect').value;
+                const lick = this.LICK_LIBRARY[lickKey];
+                if (!lick) return;
+
+                if (this.audioCtx.state === 'suspended') await this.audioCtx.resume();
+
+                const noteDuration = 60 / lick.bpm; // Durata di una semiminima in secondi
+                const currentSet = this.STRING_SETS[lick.stringSet];
+
+                for (let i = 0; i < lick.sequence.length; i++) {
+                    const note = lick.sequence[i];
+                    const playTime = this.audioCtx.currentTime + i * noteDuration;
+
+                    const midi = currentSet.midiBase[note.stringIndex] + note.fret;
+                    this.playSingleMidiNote(midi, playTime, noteDuration * 0.9); // Suona la nota
+
+                    // Animazione visiva
+                    const noteDiv = document.getElementById(`lick-note-${i}`);
+                    setTimeout(() => { if (noteDiv) noteDiv.classList.add('playing'); }, i * noteDuration * 1000);
+                    setTimeout(() => { if (noteDiv) noteDiv.classList.remove('playing'); }, (i + 0.9) * noteDuration * 1000);
+
+                    await new Promise(r => setTimeout(r, noteDuration * 1000)); // Attendi la durata della nota
+                }
+            },
         };
 
         // Avvia l'applicazione
