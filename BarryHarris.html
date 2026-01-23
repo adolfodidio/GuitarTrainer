@@ -38,6 +38,16 @@
             background: #252525;
         }
 
+        /* NAVIGAZIONE STANZE */
+        .nav-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .nav-btn { background: #444; border: 1px solid #666; opacity: 0.6; }
+        .nav-btn.active { background: var(--tonic-color); color: white; opacity: 1; border-color: white; }
+        .room-section { display: none; width: 100%; display: flex; flex-direction: column; align-items: center; }
+
         select, button {
             padding: 10px 20px;
             font-size: 16px;
@@ -119,7 +129,7 @@
         .fret-line {
             position: absolute;
             top: 0;
-            height: 100px; /* 4 corde * 25px */
+            height: 150px; /* 6 corde * 25px */
             width: 1px;
             background: #333;
             z-index: 0;
@@ -144,7 +154,15 @@
     <h1>Bebop Logic Engine</h1>
     <div class="subtitle">"God's logic on a web page. Dig it."</div>
 
-    <div class="controls">
+    <!-- NAVIGAZIONE -->
+    <div class="nav-bar">
+        <button onclick="openRoom(1)" id="btn-room-1" class="nav-btn active">STANZA 1: Logic Engine</button>
+        <button onclick="openRoom(2)" id="btn-room-2" class="nav-btn">STANZA 2: Family Finder</button>
+    </div>
+
+    <!-- STANZA 1: LOGIC ENGINE -->
+    <div id="room-1" class="room-section" style="display: flex;">
+        <div class="controls">
         <label>KEY (TONALITÀ): </label>
         <select id="keySelect">
             <option value="C">C</option>
@@ -167,15 +185,7 @@
             <option value="minor6">Minor 6 Diminished</option>
         </select>
 
-        <label>STRING SET: </label>
-        <select id="stringSet">
-            <option value="top">Top 4 (1-2-3-4)</option>
-            <option value="middle">Middle 4 (2-3-4-5)</option>
-            <option value="bottom">Bottom 4 (3-4-5-6)</option>
-        </select>
-
         <button onclick="renderScale()">CALCULATE LOGIC</button>
-        <button onclick="playScale()" style="border-color: #4CAF50; color: #4CAF50;">PLAY SCALE</button>
     </div>
 
     <div id="scaleGrid" class="scale-container">
@@ -231,6 +241,13 @@
             ]
         };
 
+        // Configurazione Set Corde (Mancante nel codice precedente)
+        const STRING_SETS = {
+            top:    { name: "Top 4 (1-2-3-4)",    strings: ['string-e', 'string-b', 'string-g', 'string-d'], offsets: [0, 0, 0, 0],    midiBase: [64, 59, 55, 50] },
+            middle: { name: "Middle 4 (2-3-4-5)", strings: ['string-b', 'string-g', 'string-d', 'string-a'], offsets: [5, 4, 5, 5],    midiBase: [59, 55, 50, 45] },
+            bottom: { name: "Bottom 4 (3-4-5-6)", strings: ['string-g', 'string-d', 'string-a', 'string-E'], offsets: [9, 9, 10, 10],  midiBase: [55, 50, 45, 40] }
+        };
+
         function getNoteName(midiIndex, useSharps) {
             const normalized = (midiIndex % 12 + 12) % 12;
             return useSharps ? NOTES_SHARP[normalized] : NOTES_FLAT[normalized];
@@ -239,6 +256,9 @@
         function generateChords(rootName, scaleType) {
             let rootIndex = NOTES_FLAT.indexOf(rootName);
             if (rootIndex === -1) rootIndex = NOTES_SHARP.indexOf(rootName);
+            
+            const setKey = document.getElementById('stringSet').value;
+            const currentSet = STRING_SETS[setKey];
             
             // Euristica per diesis/bemolli
             const useSharps = ['G', 'D', 'A', 'E', 'B', 'F#', 'C#'].includes(rootName);
@@ -266,13 +286,16 @@
                     return getNoteName(rootIndex + intervals[i], useSharps);
                 }).join('-');
                 
-                // 4. Calcola Tablatura (Trasposizione)
+                // 4. Calcola Tablatura (Trasposizione + Set Offset)
+                // Applica offset del set (es. sposta da corde alte a basse)
+                const shapeWithSetOffset = shape.tab.map((f, i) => f + currentSet.offsets[i]);
+
                 let shift = rootIndex; // C=0
                 // Se l'accordo va troppo in alto (> tasto 19), abbassa di un'ottava
-                const maxFret = Math.max(...shape.tab);
+                const maxFret = Math.max(...shapeWithSetOffset);
                 if (maxFret + shift > 19) shift -= 12;
                 
-                const tab = shape.tab.map(f => f + shift);
+                const tab = shapeWithSetOffset.map(f => f + shift);
                 
                 return { name, type: shape.type, notes: notesList, tab };
             });
@@ -288,9 +311,11 @@
                 audioCtx.resume();
             }
 
-            // Ordine corde nell'array tab: [E cantino, B, G, D]
-            // MIDI base: E4=64, B3=59, G3=55, D3=50
-            const baseMidi = [64, 59, 55, 50];
+            const setKey = document.getElementById('stringSet').value;
+            const currentSet = STRING_SETS[setKey];
+            
+            // MIDI base dipende dal set
+            const baseMidi = currentSet.midiBase;
             const now = audioCtx.currentTime;
 
             chord.tab.forEach((fret, index) => {
@@ -314,39 +339,6 @@
                 osc.start(now);
                 osc.stop(now + 2.0);
             });
-        }
-
-        async function playScale() {
-            // Rigenera la scala per assicurarsi che UI e Audio siano sincronizzati
-            renderScale();
-            
-            const key = document.getElementById('keySelect').value;
-            const type = document.getElementById('scaleType').value;
-            const chords = generateChords(key, type);
-            const cards = document.querySelectorAll('.chord-card');
-
-            for (let i = 0; i < chords.length; i++) {
-                const chord = chords[i];
-                const card = cards[i];
-
-                // Feedback Visivo: evidenzia la card corrente
-                if (card) {
-                    card.style.transform = "translateY(-10px)";
-                    card.style.borderColor = "#fff";
-                }
-                
-                showTab(chord);
-                playChord(chord);
-
-                // Attendi prima del prossimo accordo (800ms)
-                await new Promise(r => setTimeout(r, 800));
-
-                // Rimuovi evidenziazione
-                if (card) {
-                    card.style.transform = "";
-                    card.style.borderColor = "";
-                }
-            }
         }
 
         function renderScale() {
@@ -379,6 +371,84 @@
             });
         }
 
+        /* --- LOGICA STANZA 2: FAMILY FINDER --- */
+        function renderFamily() {
+            const parentName = document.getElementById('dimSelect').value;
+            const container = document.getElementById('familyGrid');
+            container.innerHTML = '';
+
+            // 1. Trova/Genera l'accordo Diminuito Genitore
+            // Usiamo la logica di generateChords ma forziamo un accordo diminuito
+            // Trucco: generiamo una scala minor6 su quella tonica e prendiamo il 2° grado (che è dim7)
+            // Oppure costruiamolo manualmente per essere più diretti.
+            
+            // Prendiamo la forma base di Ddim7 (Drop 2 top strings): [7,6,7,6]
+            // D è index 2.
+            let rootIndex = NOTES_FLAT.indexOf(parentName);
+            if (rootIndex === -1) rootIndex = NOTES_SHARP.indexOf(parentName);
+            
+            // Calcolo shift rispetto a D (index 2)
+            let shift = rootIndex - 2; 
+            
+            const setKey = document.getElementById('stringSet').value;
+            const currentSet = STRING_SETS[setKey];
+            
+            // Forma base Ddim7
+            const baseShape = [7,6,7,6]; 
+            // Applica offset set e shift tonica
+            let parentTab = baseShape.map((f, i) => f + currentSet.offsets[i] + shift);
+            
+            // Normalizza ottava (se troppo alto o basso)
+            if (Math.max(...parentTab) > 18) parentTab = parentTab.map(f => f - 12);
+            if (Math.min(...parentTab) < 0) parentTab = parentTab.map(f => f + 12);
+
+            const parentChord = {
+                name: parentName + "dim7",
+                type: 'dim',
+                notes: "Parent",
+                tab: parentTab
+            };
+
+            // Render Parent Card
+            createCard(parentChord, container, true);
+
+            // 2. Genera i 4 Figli (Dominanti)
+            // Regola Barry Harris: Abbassa una nota del diminuito di 1 semitono -> Dominante
+            for(let i=0; i<4; i++) {
+                const childTab = [...parentTab];
+                childTab[i] = childTab[i] - 1; // Abbassa la nota sulla corda i
+
+                // Calcola il nome del Dominante
+                // La nota abbassata diventa la Tonica del nuovo accordo dominante
+                const stringMidiBase = currentSet.midiBase[i];
+                const noteMidi = stringMidiBase + childTab[i];
+                const noteName = getNoteName(noteMidi, true); // Usa diesis per semplicità
+                
+                const childChord = {
+                    name: noteName + "7",
+                    type: 'tonic', // Usiamo stile tonic per i dominanti qui
+                    notes: `String ${i+1} lowered`,
+                    tab: childTab
+                };
+                
+                createCard(childChord, container, false);
+            }
+        }
+
+        function createCard(chord, container, isParent) {
+            const card = document.createElement('div');
+            card.className = `chord-card ${isParent ? 'type-dim' : 'type-tonic'}`;
+            if(isParent) card.style.borderWidth = "4px";
+            
+            card.innerHTML = `
+                <span class="chord-func">${isParent ? 'PARENT' : 'CHILD'}</span>
+                <span class="chord-name">${chord.name}</span>
+                <div class="chord-notes">${chord.notes}</div>
+            `;
+            card.onclick = () => { showTab(chord); playChord(chord); };
+            container.appendChild(card);
+        }
+
         function drawFretboardGrid() {
             const visualizer = document.getElementById('tab-visualizer');
             if(visualizer.querySelector('.fret-number')) return; // Già disegnata
@@ -404,21 +474,20 @@
         }
 
         function showTab(chord) {
-            document.getElementById('tab-instruction').innerText = `Visualizzando: ${chord.name} (Drop 2 - Corde 1,2,3,4)`;
-            
-            // Tab array order: E(1), B(2), G(3), D(4)
-            // Nel JS sopra ho messo l'ordine [E, B, G, D]
-            
-            const strings = ['string-e', 'string-b', 'string-g', 'string-d'];
-            
-            // Pulisci vecchie note
-            strings.forEach(id => {
-                document.getElementById(id).innerHTML = ''; 
-            });
+            const setKey = document.getElementById('stringSet').value;
+            const currentSet = STRING_SETS[setKey];
 
+            document.getElementById('tab-instruction').innerText = `Visualizzando: ${chord.name} (${currentSet.name})`;
+            
+            // Pulisci tutte le corde
+            const allStrings = ['string-e', 'string-b', 'string-g', 'string-d', 'string-a', 'string-E'];
+            allStrings.forEach(id => document.getElementById(id).innerHTML = '');
+            
             // Disegna nuove note
+            const activeStrings = currentSet.strings;
+
             chord.tab.forEach((fret, index) => {
-                const stringDiv = document.getElementById(strings[index]);
+                const stringDiv = document.getElementById(activeStrings[index]);
                 const noteDiv = document.createElement('div');
                 noteDiv.className = 'tab-note';
                 noteDiv.innerText = fret;
@@ -432,10 +501,33 @@
             });
         }
 
+        function openRoom(roomId) {
+            // Nascondi tutto
+            document.querySelectorAll('.room-section').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            
+            // Mostra target
+            document.getElementById(`room-${roomId}`).style.display = 'flex';
+            document.getElementById(`btn-room-${roomId}`).classList.add('active');
+        }
+
         // Avvia subito in DO all'apertura
         window.onload = () => {
+            // Popola select Diminuito
+            const dimSelect = document.getElementById('dimSelect');
+            NOTES_FLAT.forEach(n => {
+                const opt = document.createElement('option');
+                opt.value = n;
+                opt.innerText = n;
+                dimSelect.appendChild(opt);
+            });
+            dimSelect.value = "C"; // Default
+
             drawFretboardGrid();
             renderScale();
+            
+            // Inizializza Stanza 2 vuota o default
+            // renderFamily(); // Opzionale all'avvio
         };
 
     </script>
