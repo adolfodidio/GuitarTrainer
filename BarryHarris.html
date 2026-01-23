@@ -119,13 +119,14 @@
             line-height: 24px;
             font-weight: bold;
             font-size: 12px;
-            top: -12px;
+            top: 25px; /* Posiziona la nota sulla linea di corda (border-bottom) */
+            transform: translateY(-50%); /* Centra verticalmente sulla linea */
             z-index: 10;
         }
         
         #tab-visualizer {
             position: relative;
-            padding-bottom: 25px; /* Spazio per i numeri */
+            padding-bottom: 40px; /* Aumentato per contenere note e numeri */
         }
         .fret-line {
             position: absolute;
@@ -137,7 +138,7 @@
         }
         .fret-number {
             position: absolute;
-            top: 155px; /* Sotto la 6a corda */
+            top: 175px; /* Spostato più in basso per non sovrapporsi alle note */
             transform: translateX(-50%);
             font-size: 10px;
             color: #666;
