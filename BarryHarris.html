@@ -38,6 +38,16 @@
             background: #252525;
         }
 
+        /* NAVIGAZIONE STANZE */
+        .nav-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .nav-btn { background: #444; border: 1px solid #666; opacity: 0.6; }
+        .nav-btn.active { background: var(--tonic-color); color: white; opacity: 1; border-color: white; }
+        .room-section { display: none; width: 100%; flex-direction: column; align-items: center; }
+
         select, button {
             padding: 10px 20px;
             font-size: 16px;
@@ -119,7 +129,7 @@
         .fret-line {
             position: absolute;
             top: 0;
-            height: 100px; /* 4 corde * 25px */
+            height: 150px; /* 6 corde * 25px */
             width: 1px;
             background: #333;
             z-index: 0;
@@ -137,6 +147,20 @@
         @media (max-width: 768px) {
             .scale-container { grid-template-columns: repeat(4, 1fr); }
         }
+
+        /* STILI STANZA 3 (RHYTHM) */
+        .beat-indicator {
+            width: 60px; height: 60px; border-radius: 50%; border: 2px solid #444;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5em; color: #555; transition: all 0.1s;
+            background: #222;
+        }
+        .beat-active {
+            background-color: #E91E63; color: white; border-color: white; 
+            transform: scale(1.1); box-shadow: 0 0 20px #E91E63;
+        }
+        .flash-error { animation: flashRedScreen 0.4s ease-out; }
+        @keyframes flashRedScreen { 0% { background-color: #b71c1c; } 100% { background-color: var(--bg-color); } }
 
         /* STILI STANZA 4 (SINGING) */
         .sing-note {
@@ -159,7 +183,17 @@
     <h1>Bebop Logic Engine</h1>
     <div class="subtitle">"God's logic on a web page. Dig it."</div>
 
-    <div class="controls">
+    <!-- NAVIGAZIONE -->
+    <div class="nav-bar">
+        <button onclick="BarryHarrisApp.openRoom(1)" id="btn-room-1" class="nav-btn active">STANZA 1: Logic Engine</button>
+        <button onclick="BarryHarrisApp.openRoom(2)" id="btn-room-2" class="nav-btn">STANZA 2: Family Finder</button>
+        <button onclick="BarryHarrisApp.openRoom(3)" id="btn-room-3" class="nav-btn">STANZA 3: Rhythm Boss</button>
+        <button onclick="BarryHarrisApp.openRoom(4)" id="btn-room-4" class="nav-btn">STANZA 4: Sing It</button>
+    </div>
+
+    <!-- STANZA 1: LOGIC ENGINE -->
+    <div id="room-1" class="room-section" style="display: flex;">
+        <div class="controls">
         <label>KEY (TONALITÀ): </label>
         <select id="keySelect">
             <option value="C">C</option>
@@ -182,159 +216,372 @@
             <option value="minor6">Minor 6 Diminished</option>
         </select>
 
-        <button onclick="renderScale()">CALCULATE LOGIC</button>
-    </div>
+        <label>STRING SET: </label>
+        <select id="stringSet">
+            <option value="top">Top 4 (1-2-3-4)</option>
+            <option value="middle">Middle 4 (2-3-4-5)</option>
+            <option value="bottom">Bottom 4 (3-4-5-6)</option>
+        </select>
 
-    <div id="scaleGrid" class="scale-container">
+        <button onclick="BarryHarrisApp.renderScale()">CALCULATE LOGIC</button>
+        <button onclick="BarryHarrisApp.playScale()" style="border-color: #4CAF50; color: #4CAF50;">PLAY SCALE</button>
         </div>
 
+        <div id="scaleGrid" class="scale-container">
+        </div>
+    </div>
+
+    <!-- STANZA 2: FAMILY FINDER -->
+    <div id="room-2" class="room-section">
+        <div class="controls" style="border-color: var(--dim-color);">
+            <h3 style="margin-top:0; color: var(--dim-color);">IL RADAR DEI PARENTI</h3>
+            <p style="font-size: 0.8em; max-width: 600px; margin-bottom: 20px;">
+                Seleziona un accordo Diminuito (Genitore). Il sistema mostrerà i 4 accordi Dominanti (Figli) generati abbassando una singola nota.
+            </p>
+            <label>DIMINISHED PARENT: </label>
+            <select id="dimSelect">
+                <!-- Popolato via JS -->
+            </select>
+            <button onclick="BarryHarrisApp.renderFamily()">TROVA PARENTI</button>
+        </div>
+
+        <div id="familyGrid" class="scale-container" style="grid-template-columns: repeat(5, 1fr);">
+            <!-- Griglia Famiglia -->
+        </div>
+    </div>
+
+    <!-- STANZA 3: RHYTHM IS THE BOSS -->
+    <div id="room-3" class="room-section">
+        <div class="controls" style="border-color: #E91E63;">
+            <h3 style="margin-top:0; color: #E91E63;">RHYTHM IS THE BOSS</h3>
+            <p style="font-size: 0.8em; max-width: 600px; margin-bottom: 20px;">
+                Il Jazz vive sul 2 e sul 4. Il metronomo suonerà solo su questi battiti.<br>
+                <span style="color: #ff5252;">ATTENZIONE:</span> Se suoni sull'1 o sul 3, lo schermo diventerà rosso!
+            </p>
+            
+            <div style="display: flex; gap: 15px; align-items: center; justify-content: center; margin-bottom: 15px;">
+                <label>BPM: <span id="bpmDisplay" style="font-weight:bold; color:#E91E63;">100</span></label>
+                <input type="range" id="bpmSlider" min="40" max="200" value="100" oninput="BarryHarrisApp.updateBpm(this.value)" style="cursor: pointer;">
+            </div>
+
+            <button id="btnMetronome" onclick="BarryHarrisApp.toggleMetronome()" style="border-color: #E91E63; color: #E91E63;">START SWING</button>
+        </div>
+
+        <div id="rhythmVisualizer" style="display: flex; gap: 20px; margin-top: 20px;">
+            <div class="beat-indicator" id="beat-1">1</div>
+            <div class="beat-indicator" id="beat-2">2</div>
+            <div class="beat-indicator" id="beat-3">3</div>
+            <div class="beat-indicator" id="beat-4">4</div>
+        </div>
+    </div>
+
+    <!-- STANZA 4: SING IT TO PLAY IT -->
+    <div id="room-4" class="room-section">
+        <div class="controls" style="border-color: #9C27B0;">
+            <h3 style="margin-top:0; color: #9C27B0;">SING IT TO PLAY IT</h3>
+            <p style="font-size: 0.8em; max-width: 600px; margin-bottom: 20px;">
+                Il computer ti mostrerà la scala. Devi cantare ogni nota per procedere.<br>
+                Usa le impostazioni della Stanza 1 per cambiare tonalità.
+            </p>
+            <button onclick="BarryHarrisApp.startSingingGame()" style="border-color: #9C27B0; color: #9C27B0;">START SINGING</button>
+        </div>
+        <div id="singing-container" style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:20px; max-width: 800px;"></div>
+        <div id="singing-feedback" style="margin-top:20px; font-size:1.5em; font-weight:bold; height: 30px; color: #9C27B0;">--</div>
+        <div id="singing-error-msg" class="error-popup">If you can't sing it,<br>you can't play it.<br><span style="font-size:0.7em; font-weight:normal;">Try again.</span></div>
+    </div>
+
     <div class="fretboard-display">
-        <h3>DROP 2 VOICING (Top 4 Strings)</h3>
+        <h3>VISUALIZZATORE (Drop 2)</h3>
         <p id="tab-instruction">Clicca su un accordo sopra per vederlo qui.</p>
         <div id="tab-visualizer">
             <div class="tab-line" id="string-e"></div>
             <div class="tab-line" id="string-b"></div>
             <div class="tab-line" id="string-g"></div>
             <div class="tab-line" id="string-d"></div>
+            <div class="tab-line" id="string-a"></div>
+            <div class="tab-line" id="string-E"></div>
         </div>
     </div>
 
     <script>
         /* --- LOGICA BARRY HARRIS (JS) --- */
+        const BarryHarrisApp = {
+            // --- Proprietà e Costanti ---
+            NOTES_FLAT: ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'],
+            NOTES_SHARP: ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'],
+            INTERVALS: {
+                major6: [0, 2, 4, 5, 7, 8, 9, 11], // 1, 2, 3, 4, 5, b6, 6, 7
+                minor6: [0, 2, 3, 5, 7, 8, 9, 11]  // 1, 2, b3, 4, 5, b6, 6, 7
+            },
+            MAX_FRETS: 20,
+            REF_SHAPES: {
+                major6: [
+                    { type: 'tonic', tab: [5,5,5,5], suffix: '6' },
+                    { type: 'dim',   tab: [7,6,7,6], suffix: 'dim7' },
+                    { type: 'tonic', tab: [8,8,9,7], suffix: '6' },
+                    { type: 'dim',   tab: [10,9,10,9], suffix: 'dim7' },
+                    { type: 'tonic', tab: [12,13,12,10], suffix: '6' },
+                    { type: 'dim',   tab: [13,12,13,12], suffix: 'dim7' },
+                    { type: 'tonic', tab: [15,17,14,14], suffix: '6' },
+                    { type: 'dim',   tab: [16,15,16,15], suffix: 'dim7' }
+                ],
+                minor6: [
+                    { type: 'tonic', tab: [5,4,5,5], suffix: 'm6' },
+                    { type: 'dim',   tab: [7,6,7,6], suffix: 'dim7' },
+                    { type: 'tonic', tab: [8,8,8,7], suffix: 'm6' },
+                    { type: 'dim',   tab: [10,9,10,9], suffix: 'dim7' },
+                    { type: 'tonic', tab: [11,10,12,10], suffix: 'm6' },
+                    { type: 'dim',   tab: [13,12,13,12], suffix: 'dim7' },
+                    { type: 'tonic', tab: [15,13,14,13], suffix: 'm6' },
+                    { type: 'dim',   tab: [16,15,16,15], suffix: 'dim7' }
+                ]
+            },
+            STRING_SETS: {
+                top:    { name: "Top 4 (1-2-3-4)",    strings: ['string-e', 'string-b', 'string-g', 'string-d'], offsets: [0, 0, 0, 0],    midiBase: [64, 59, 55, 50] },
+                middle: { name: "Middle 4 (2-3-4-5)", strings: ['string-b', 'string-g', 'string-d', 'string-a'], offsets: [5, 4, 5, 5],    midiBase: [59, 55, 50, 45] },
+                bottom: { name: "Bottom 4 (3-4-5-6)", strings: ['string-g', 'string-d', 'string-a', 'string-E'], offsets: [9, 9, 10, 10],  midiBase: [55, 50, 45, 40] }
+            },
 
-        // Costanti Musicali
-        const NOTES_FLAT = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
-        const NOTES_SHARP = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-        
-        // Intervalli Scale Barry Harris (8 note)
-        const INTERVALS = {
-            major6: [0, 2, 4, 5, 7, 8, 9, 11], // 1, 2, 3, 4, 5, b6, 6, 7
-            minor6: [0, 2, 3, 5, 7, 8, 9, 11]  // 1, 2, b3, 4, 5, b6, 6, 7
-        };
-
-        const MAX_FRETS = 20;
-
-        // Forme di Riferimento in DO (C) - Drop 2 (Corde 1-2-3-4)
-        const REF_SHAPES = {
-            major6: [
-                { type: 'tonic', tab: [5,5,5,5], suffix: '6' },       // C6
-                { type: 'dim',   tab: [7,6,7,6], suffix: 'dim7' },    // Ddim7
-                { type: 'tonic', tab: [8,8,9,7], suffix: '6' },       // C6/E
-                { type: 'dim',   tab: [10,9,10,9], suffix: 'dim7' },  // Fdim7
-                { type: 'tonic', tab: [12,13,12,10], suffix: '6' },   // C6/G
-                { type: 'dim',   tab: [13,12,13,12], suffix: 'dim7' },// Abdim7
-                { type: 'tonic', tab: [15,17,14,14], suffix: '6' },   // C6/A
-                { type: 'dim',   tab: [16,15,16,15], suffix: 'dim7' } // Bdim7
-            ],
-            minor6: [
-                { type: 'tonic', tab: [5,4,5,5], suffix: 'm6' },      // Cm6
-                { type: 'dim',   tab: [7,6,7,6], suffix: 'dim7' },    // Ddim7
-                { type: 'tonic', tab: [8,8,8,7], suffix: 'm6' },      // Cm6/Eb
-                { type: 'dim',   tab: [10,9,10,9], suffix: 'dim7' },  // Fdim7
-                { type: 'tonic', tab: [11,10,12,10], suffix: 'm6' },  // Cm6/G
-                { type: 'dim',   tab: [13,12,13,12], suffix: 'dim7' },// Abdim7
-                { type: 'tonic', tab: [15,13,14,13], suffix: 'm6' },  // Cm6/A
-                { type: 'dim',   tab: [16,15,16,15], suffix: 'dim7' } // Bdim7
-            ]
-        };
-
-        function getNoteName(midiIndex, useSharps) {
-            const normalized = (midiIndex % 12 + 12) % 12;
-            return useSharps ? NOTES_SHARP[normalized] : NOTES_FLAT[normalized];
-        }
-
-        function generateChords(rootName, scaleType) {
-            let rootIndex = NOTES_FLAT.indexOf(rootName);
-            if (rootIndex === -1) rootIndex = NOTES_SHARP.indexOf(rootName);
+            // --- Stato dell'Applicazione ---
+            audioCtx: null,
+            micStream: null,
+            micAnalyser: null,
+            currentRoom: 1,
+            settings: {
+                key: 'C',
+                scaleType: 'major6',
+                stringSet: 'top',
+                bpm: 100
+            },
             
-            // Euristica per diesis/bemolli
-            const useSharps = ['G', 'D', 'A', 'E', 'B', 'F#', 'C#'].includes(rootName);
-            
-            const intervals = INTERVALS[scaleType];
-            const shapes = REF_SHAPES[scaleType];
-            
-            return shapes.map((shape, step) => {
-                // 1. Calcola Nota della Scala
-                const scaleNoteIndex = rootIndex + intervals[step];
-                const scaleNoteName = getNoteName(scaleNoteIndex, useSharps);
+            // --- Stato delle Stanze (per fermarle) ---
+            metronome: {
+                isOn: false,
+                interval: null,
+                nextNoteTime: 0.0,
+                currentBeat: 0,
+                lookahead: 25.0,
+                scheduleAheadTime: 0.1,
+                lastAttackTime: 0
+            },
+            singing: {
+                isActive: false,
+                notes: [],
+                currentIndex: 0,
+                wrongCounter: 0,
+                lastNote: -1
+            },
+
+            // --- Metodi Principali ---
+            init: function() {
+                this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 
-                // 2. Calcola Nome Accordo
-                let name = "";
-                if (shape.type === 'tonic') {
-                    const rootStr = getNoteName(rootIndex, useSharps);
-                    name = (step === 0) ? `${rootStr}${shape.suffix}` : `${rootStr}${shape.suffix}/${scaleNoteName}`;
-                } else {
-                    name = `${scaleNoteName}${shape.suffix}`;
+                // Popola i menu
+                const dimSelect = document.getElementById('dimSelect');
+                this.NOTES_FLAT.forEach(n => {
+                    const opt = document.createElement('option');
+                    opt.value = n;
+                    opt.innerText = n;
+                    dimSelect.appendChild(opt);
+                });
+                dimSelect.value = "C";
+
+                // Aggiungi event listeners per aggiornare le impostazioni
+                document.getElementById('keySelect').addEventListener('change', (e) => this.settings.key = e.target.value);
+                document.getElementById('scaleType').addEventListener('change', (e) => this.settings.scaleType = e.target.value);
+                document.getElementById('stringSet').addEventListener('change', (e) => this.settings.stringSet = e.target.value);
+
+                this.drawFretboardGrid();
+                this.renderScale();
+                this.openRoom(1);
+            },
+
+            openRoom: function(roomId) {
+                this.stopAllActivities();
+                this.currentRoom = roomId;
+
+                document.querySelectorAll('.room-section').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+                
+                document.getElementById(`room-${roomId}`).style.display = 'flex';
+                document.getElementById(`btn-room-${roomId}`).classList.add('active');
+            },
+
+            stopAllActivities: function() {
+                // Ferma Metronomo (Stanza 3)
+                if (this.metronome.isOn) {
+                    this.toggleMetronome();
                 }
+                // Ferma Pitch Detection (Stanza 4)
+                this.singing.isActive = false;
+
+                // Chiudi stream microfono se non più necessario
+                if (this.micStream && this.currentRoom !== 3 && this.currentRoom !== 4) {
+                    this.micStream.getTracks().forEach(track => track.stop());
+                    this.micStream = null;
+                    this.micAnalyser = null;
+                }
+            },
+
+            // --- Metodi Helper ---
+            getNoteName: function(midiIndex, useSharps) {
+                const normalized = (midiIndex % 12 + 12) % 12;
+                return useSharps ? this.NOTES_SHARP[normalized] : this.NOTES_FLAT[normalized];
+            },
+
+            // --- Metodi Audio ---
+            playChord: function(chord) {
+                if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+
+                const currentSet = this.STRING_SETS[this.settings.stringSet];
+                const baseMidi = currentSet.midiBase;
+                const now = this.audioCtx.currentTime;
+
+                chord.tab.forEach((fret, index) => {
+                    const midi = baseMidi[index] + fret;
+                    const freq = 440 * Math.pow(2, (midi - 69) / 12);
+
+                    const osc = this.audioCtx.createOscillator();
+                    const gain = this.audioCtx.createGain();
+
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now);
+
+                    gain.gain.setValueAtTime(0, now);
+                    gain.gain.linearRampToValueAtTime(0.1, now + 0.05); 
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 2.0);
+
+                    osc.connect(gain);
+                    gain.connect(this.audioCtx.destination);
+
+                    osc.start(now);
+                    osc.stop(now + 2.0);
+                });
+            },
+
+            // --- Metodi UI ---
+            drawFretboardGrid: function() {
+                const visualizer = document.getElementById('tab-visualizer');
+                if(visualizer.querySelector('.fret-number')) return;
+
+                for (let i = 0; i <= this.MAX_FRETS; i++) {
+                    const left = (i / this.MAX_FRETS) * 100;
+                    
+                    if (i > 0) {
+                        const line = document.createElement('div');
+                        line.className = 'fret-line';
+                        line.style.left = `${left}%`;
+                        visualizer.appendChild(line);
+                    }
+                    
+                    const num = document.createElement('div');
+                    num.className = 'fret-number';
+                    num.innerText = i;
+                    num.style.left = `${left}%`;
+                    visualizer.appendChild(num);
+                }
+            },
+
+            showTab: function(chord) {
+                const currentSet = this.STRING_SETS[this.settings.stringSet];
+                document.getElementById('tab-instruction').innerText = `Visualizzando: ${chord.name} (${currentSet.name})`;
                 
-                // 3. Calcola Note (Toniche: 1,3,5,6 - Diminuite: 2,4,b6,7)
-                const indices = (shape.type === 'tonic') ? [0, 2, 4, 6] : [1, 3, 5, 7];
-                const notesList = indices.map(i => {
-                    return getNoteName(rootIndex + intervals[i], useSharps);
-                }).join('-');
+                const allStrings = ['string-e', 'string-b', 'string-g', 'string-d', 'string-a', 'string-E'];
+                allStrings.forEach(id => document.getElementById(id).innerHTML = '');
+
+                const activeStrings = currentSet.strings;
+                chord.tab.forEach((fret, index) => {
+                    const stringDiv = document.getElementById(activeStrings[index]);
+                    const noteDiv = document.createElement('div');
+                    noteDiv.className = 'tab-note';
+                    noteDiv.innerText = fret;
+                    
+                    let leftPos = (fret / this.MAX_FRETS) * 100; 
+                    noteDiv.style.left = leftPos + '%';
+                    
+                    stringDiv.appendChild(noteDiv);
+                });
+            },
+
+            // --- STANZA 1: LOGIC ENGINE ---
+            generateChords: function(rootName, scaleType) {
+                let rootIndex = this.NOTES_FLAT.indexOf(rootName);
+                if (rootIndex === -1) rootIndex = this.NOTES_SHARP.indexOf(rootName);
                 
-                // 4. Calcola Tablatura (Trasposizione)
-                let shift = rootIndex; // C=0
-                // Se l'accordo va troppo in alto (> tasto 19), abbassa di un'ottava
-                const maxFret = Math.max(...shape.tab);
-                if (maxFret + shift > 19) shift -= 12;
+                const currentSet = this.STRING_SETS[this.settings.stringSet];
+                const useSharps = ['G', 'D', 'A', 'E', 'B', 'F#', 'C#'].includes(rootName);
+                const intervals = this.INTERVALS[scaleType];
+                const shapes = this.REF_SHAPES[scaleType];
                 
-                const tab = shape.tab.map(f => f + shift);
+                return shapes.map((shape, step) => {
+                    const scaleNoteIndex = rootIndex + intervals[step];
+                    const scaleNoteName = this.getNoteName(scaleNoteIndex, useSharps);
+                    
+                    let name = "";
+                    if (shape.type === 'tonic') {
+                        const rootStr = this.getNoteName(rootIndex, useSharps);
+                        name = (step === 0) ? `${rootStr}${shape.suffix}` : `${rootStr}${shape.suffix}/${scaleNoteName}`;
+                    } else {
+                        name = `${scaleNoteName}${shape.suffix}`;
+                    }
+                    
+                    const indices = (shape.type === 'tonic') ? [0, 2, 4, 6] : [1, 3, 5, 7];
+                    const notesList = indices.map(i => this.getNoteName(rootIndex + intervals[i], useSharps)).join('-');
+                    
+                    const shapeWithSetOffset = shape.tab.map((f, i) => f + currentSet.offsets[i]);
+                    let shift = rootIndex;
+                    const maxFret = Math.max(...shapeWithSetOffset);
+                    if (maxFret + shift > 19) shift -= 12;
+                    
+                    const tab = shapeWithSetOffset.map(f => f + shift);
+                    
+                    return { name, type: shape.type, notes: notesList, tab };
+                });
+            },
+
+            renderScale: function() {
+                const container = document.getElementById('scaleGrid');
+                container.innerHTML = '';
                 
-                return { name, type: shape.type, notes: notesList, tab };
-            });
-        }
+                const chords = this.generateChords(this.settings.key, this.settings.scaleType);
 
-        let audioCtx;
+                chords.forEach((chord) => {
+                    const card = this.createGenericCard(chord);
+                    card.onclick = () => {
+                        this.showTab(chord);
+                        this.playChord(chord);
+                    };
+                    container.appendChild(card);
+                });
+            },
 
-        function playChord(chord) {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+            playScale: async function() {
+                this.renderScale();
+                const chords = this.generateChords(this.settings.key, this.settings.scaleType);
+                const cards = document.querySelectorAll('#scaleGrid .chord-card');
 
-            // Ordine corde nell'array tab: [E cantino, B, G, D]
-            // MIDI base: E4=64, B3=59, G3=55, D3=50
-            const baseMidi = [64, 59, 55, 50];
-            const now = audioCtx.currentTime;
+                for (let i = 0; i < chords.length; i++) {
+                    const chord = chords[i];
+                    const card = cards[i];
 
-            chord.tab.forEach((fret, index) => {
-                const midi = baseMidi[index] + fret;
-                const freq = 440 * Math.pow(2, (midi - 69) / 12);
+                    if (card) {
+                        card.style.transform = "translateY(-10px)";
+                        card.style.borderColor = "#fff";
+                    }
+                    
+                    this.showTab(chord);
+                    this.playChord(chord);
 
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
+                    await new Promise(r => setTimeout(r, 800));
 
-                osc.type = 'triangle'; // Suono morbido
-                osc.frequency.setValueAtTime(freq, now);
+                    if (card) {
+                        card.style.transform = "";
+                        card.style.borderColor = "";
+                    }
+                }
+            },
 
-                // Envelope per simulare il pizzico
-                gain.gain.setValueAtTime(0, now);
-                gain.gain.linearRampToValueAtTime(0.1, now + 0.05); 
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 2.0);
-
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-
-                osc.start(now);
-                osc.stop(now + 2.0);
-            });
-        }
-
-        function renderScale() {
-            const key = document.getElementById('keySelect').value;
-            const type = document.getElementById('scaleType').value;
-            const container = document.getElementById('scaleGrid');
-            
-            // Pulisci
-            container.innerHTML = '';
-            
-            const chords = generateChords(key, type);
-
-            // Genera le card
-            chords.forEach((chord, index) => {
+            createGenericCard: function(chord) {
                 const card = document.createElement('div');
                 card.className = `chord-card type-${chord.type}`;
                 card.innerHTML = `
@@ -342,76 +589,328 @@
                     <span class="chord-name">${chord.name}</span>
                     <div class="chord-notes">${chord.notes}</div>
                 `;
-                
-                // Evento click per la tablatura
-                card.onclick = () => {
-                    showTab(chord);
-                    playChord(chord);
-                };
-                
-                container.appendChild(card);
-            });
-        }
+                return card;
+            },
 
-        function drawFretboardGrid() {
-            const visualizer = document.getElementById('tab-visualizer');
-            if(visualizer.querySelector('.fret-number')) return; // Già disegnata
+            // --- STANZA 2: FAMILY FINDER ---
+            renderFamily: function() {
+                const parentName = document.getElementById('dimSelect').value;
+                const container = document.getElementById('familyGrid');
+                container.innerHTML = '';
 
-            for (let i = 0; i <= MAX_FRETS; i++) {
-                const left = (i / MAX_FRETS) * 100;
+                let rootIndex = this.NOTES_FLAT.indexOf(parentName);
+                if (rootIndex === -1) rootIndex = this.NOTES_SHARP.indexOf(parentName);
                 
-                // Linea tasto (escluso capotasto 0 se si vuole, ma mettiamolo per riferimento)
-                if (i > 0) {
-                    const line = document.createElement('div');
-                    line.className = 'fret-line';
-                    line.style.left = `${left}%`;
-                    visualizer.appendChild(line);
+                let shift = rootIndex - 2; 
+                const currentSet = this.STRING_SETS[this.settings.stringSet];
+                const baseShape = [7,6,7,6]; 
+                let parentTab = baseShape.map((f, i) => f + currentSet.offsets[i] + shift);
+                
+                if (Math.max(...parentTab) > 18) parentTab = parentTab.map(f => f - 12);
+                if (Math.min(...parentTab) < 0) parentTab = parentTab.map(f => f + 12);
+
+                const parentChord = { name: parentName + "dim7", type: 'dim', notes: "Parent", tab: parentTab };
+                this.createFamilyCard(parentChord, container, true);
+
+                for(let i=0; i<4; i++) {
+                    const childTab = [...parentTab];
+                    childTab[i] = childTab[i] - 1;
+
+                    const stringMidiBase = currentSet.midiBase[i];
+                    const noteMidi = stringMidiBase + childTab[i];
+                    const noteName = this.getNoteName(noteMidi, true);
+                    
+                    const childChord = { name: noteName + "7", type: 'tonic', notes: `String ${i+1} lowered`, tab: childTab };
+                    this.createFamilyCard(childChord, container, false);
                 }
+            },
+
+            createFamilyCard: function(chord, container, isParent) {
+                const card = document.createElement('div');
+                card.className = `chord-card ${isParent ? 'type-dim' : 'type-tonic'}`;
+                if(isParent) card.style.borderWidth = "4px";
                 
-                // Numero tasto
-                const num = document.createElement('div');
-                num.className = 'fret-number';
-                num.innerText = i;
-                num.style.left = `${left}%`;
-                visualizer.appendChild(num);
+                card.innerHTML = `
+                    <span class="chord-func">${isParent ? 'PARENT' : 'CHILD'}</span>
+                    <span class="chord-name">${chord.name}</span>
+                    <div class="chord-notes">${chord.notes}</div>
+                `;
+                card.onclick = () => { this.showTab(chord); this.playChord(chord); };
+                container.appendChild(card);
+            },
+
+            // --- STANZA 3: RHYTHM BOSS ---
+            updateBpm: function(val) {
+                this.settings.bpm = val;
+                document.getElementById('bpmDisplay').innerText = val;
+            },
+
+            toggleMetronome: async function() {
+                const btn = document.getElementById('btnMetronome');
+                
+                if (this.metronome.isOn) {
+                    this.metronome.isOn = false;
+                    btn.innerText = "START SWING";
+                    clearInterval(this.metronome.interval);
+                    this.resetVisuals();
+                    return;
+                }
+
+                if (this.audioCtx.state === 'suspended') await this.audioCtx.resume();
+
+                try {
+                    if (!this.micStream) {
+                        this.micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        const source = this.audioCtx.createMediaStreamSource(this.micStream);
+                        this.micAnalyser = this.audioCtx.createAnalyser();
+                        this.micAnalyser.fftSize = 512;
+                        source.connect(this.micAnalyser);
+                    }
+                } catch (e) {
+                    alert("Microfono necessario per rilevare gli errori ritmici!");
+                }
+
+                this.metronome.isOn = true;
+                btn.innerText = "STOP";
+                this.metronome.currentBeat = 0;
+                this.metronome.nextNoteTime = this.audioCtx.currentTime + 0.1;
+                this.metronome.interval = setInterval(() => this.scheduler(), this.metronome.lookahead);
+                
+                this.detectRhythmError();
+            },
+
+            scheduler: function() {
+                while (this.metronome.nextNoteTime < this.audioCtx.currentTime + this.metronome.scheduleAheadTime) {
+                    this.scheduleNote(this.metronome.currentBeat, this.metronome.nextNoteTime);
+                    this.nextNote();
+                }
+            },
+
+            scheduleNote: function(beatNumber, time) {
+                if (beatNumber === 1 || beatNumber === 3) {
+                    this.playHiHat(time);
+                }
+                const delay = (time - this.audioCtx.currentTime) * 1000;
+                setTimeout(() => this.updateVisualBeat(beatNumber), delay);
+            },
+
+            nextNote: function() {
+                const secondsPerBeat = 60.0 / this.settings.bpm;
+                this.metronome.nextNoteTime += secondsPerBeat;
+                this.metronome.currentBeat = (this.metronome.currentBeat + 1) % 4;
+            },
+
+            playHiHat: function(time) {
+                const osc = this.audioCtx.createOscillator();
+                const gain = this.audioCtx.createGain();
+                const filter = this.audioCtx.createBiquadFilter();
+                
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(800, time);
+                osc.frequency.exponentialRampToValueAtTime(4000, time + 0.05); 
+                
+                filter.type = 'highpass';
+                filter.frequency.value = 7000;
+
+                gain.gain.setValueAtTime(0.3, time);
+                gain.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
+
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.audioCtx.destination);
+
+                osc.start(time);
+                osc.stop(time + 0.1);
+            },
+
+            updateVisualBeat: function(beat) {
+                for(let i=1; i<=4; i++) document.getElementById(`beat-${i}`).classList.remove('beat-active');
+                if (beat === 1 || beat === 3) { 
+                    document.getElementById(`beat-${beat+1}`).classList.add('beat-active');
+                }
+            },
+            
+            resetVisuals: function() {
+                for(let i=1; i<=4; i++) document.getElementById(`beat-${i}`).classList.remove('beat-active');
+            },
+
+            detectRhythmError: function() {
+                if (!this.metronome.isOn || !this.micAnalyser) return;
+
+                const buffer = new Float32Array(this.micAnalyser.fftSize);
+                this.micAnalyser.getFloatTimeDomainData(buffer);
+                
+                let sum = 0;
+                for (let i = 0; i < buffer.length; i++) sum += buffer[i] * buffer[i];
+                const rms = Math.sqrt(sum / buffer.length);
+
+                if (rms > 0.05) { 
+                    const now = this.audioCtx.currentTime;
+                    if (now - this.metronome.lastAttackTime > 0.2) { 
+                        this.metronome.lastAttackTime = now;
+                        const secondsPerBeat = 60.0 / this.settings.bpm;
+                        let actualBeatIndex = (this.metronome.currentBeat - 1 + 4) % 4; 
+
+                        if (now > this.metronome.nextNoteTime - (secondsPerBeat * 0.3)) {
+                            actualBeatIndex = this.metronome.currentBeat;
+                        }
+
+                        if (actualBeatIndex === 0 || actualBeatIndex === 2) {
+                            this.triggerError();
+                        }
+                    }
+                }
+                requestAnimationFrame(() => this.detectRhythmError());
+            },
+
+            triggerError: function() {
+                document.body.classList.add('flash-error');
+                setTimeout(() => document.body.classList.remove('flash-error'), 400);
+            },
+
+            // --- STANZA 4: SING IT ---
+            startSingingGame: function() {
+                if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+
+                let rootIndex = this.NOTES_FLAT.indexOf(this.settings.key);
+                if (rootIndex === -1) rootIndex = this.NOTES_SHARP.indexOf(this.settings.key);
+                
+                const scaleIntervals = this.INTERVALS[this.settings.scaleType];
+                this.singing.notes = scaleIntervals.map(i => (rootIndex + i) % 12);
+                this.singing.currentIndex = 0;
+                this.singing.wrongCounter = 0;
+                this.singing.isActive = true;
+
+                const container = document.getElementById('singing-container');
+                container.innerHTML = '';
+                this.singing.notes.forEach((noteIdx, i) => {
+                    const noteName = this.getNoteName(noteIdx, false);
+                    const el = document.createElement('div');
+                    el.className = 'sing-note';
+                    el.id = `sing-note-${i}`;
+                    el.innerText = noteName;
+                    container.appendChild(el);
+                });
+                this.updateSingingUI();
+
+                this.initMicForSinging();
+            },
+
+            initMicForSinging: async function() {
+                try {
+                    if(!this.micStream) {
+                        this.micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        const source = this.audioCtx.createMediaStreamSource(this.micStream);
+                        this.micAnalyser = this.audioCtx.createAnalyser();
+                        this.micAnalyser.fftSize = 2048;
+                        source.connect(this.micAnalyser);
+                    }
+                    this.detectPitchLoop();
+                } catch (e) {
+                    alert("Microfono necessario per cantare!");
+                }
+            },
+
+            detectPitchLoop: function() {
+                if (!this.singing.isActive) return;
+
+                const buf = new Float32Array(this.micAnalyser.fftSize);
+                this.micAnalyser.getFloatTimeDomainData(buf);
+                const freq = this.autoCorrelate(buf, this.audioCtx.sampleRate);
+
+                const feedbackEl = document.getElementById('singing-feedback');
+                const errorPopup = document.getElementById('singing-error-msg');
+
+                if (freq !== -1) {
+                    const midiNum = this.noteFromPitch(freq);
+                    const noteIdx = midiNum % 12;
+                    const noteName = this.getNoteName(noteIdx, false);
+                    
+                    feedbackEl.innerText = `Detected: ${noteName}`;
+
+                    const targetNote = this.singing.notes[this.singing.currentIndex];
+                    
+                    if (noteIdx === targetNote) {
+                        this.singing.wrongCounter = 0;
+                        errorPopup.style.display = 'none';
+                        
+                        this.singing.currentIndex++;
+                        if (this.singing.currentIndex >= this.singing.notes.length) {
+                            feedbackEl.innerText = "SCALA COMPLETATA! YEAH!";
+                            this.singing.isActive = false;
+                            this.updateSingingUI();
+                            return;
+                        }
+                        this.updateSingingUI();
+                    } else {
+                        if (this.singing.lastNote === noteIdx) {
+                            this.singing.wrongCounter++;
+                        } else {
+                            this.singing.wrongCounter = 0;
+                        }
+                        this.singing.lastNote = noteIdx;
+
+                        if (this.singing.wrongCounter > 30) {
+                            errorPopup.style.display = 'block';
+                        }
+                    }
+                } else {
+                    this.singing.wrongCounter = 0;
+                    errorPopup.style.display = 'none';
+                }
+
+                requestAnimationFrame(() => this.detectPitchLoop());
+            },
+
+            updateSingingUI: function() {
+                this.singing.notes.forEach((_, i) => {
+                    const el = document.getElementById(`sing-note-${i}`);
+                    el.classList.remove('active', 'success');
+                    if (i < this.singing.currentIndex) el.classList.add('success');
+                    if (i === this.singing.currentIndex) el.classList.add('active');
+                });
+            },
+
+            noteFromPitch: function(frequency) {
+                const noteNum = 12 * (Math.log(frequency / 440) / Math.log(2));
+                return Math.round(noteNum) + 69;
+            },
+
+            autoCorrelate: function(buf, sampleRate) {
+                let SIZE = buf.length;
+                let rms = 0;
+                for (let i = 0; i < SIZE; i++) { rms += buf[i] * buf[i]; }
+                rms = Math.sqrt(rms / SIZE);
+                if (rms < 0.01) return -1;
+
+                let r1 = 0, r2 = SIZE - 1, thres = 0.2;
+                for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
+                for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
+                buf = buf.slice(r1, r2);
+                SIZE = buf.length;
+                let c = new Array(SIZE).fill(0);
+                for (let i = 0; i < SIZE; i++) 
+                    for (let j = 0; j < SIZE - i; j++)
+                        c[i] = c[i] + buf[j] * buf[j + i];
+
+                let d = 0; while (c[d] > c[d + 1]) d++;
+                let maxval = -1, maxpos = -1;
+                for (let i = d; i < SIZE; i++) {
+                    if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
+                }
+                let T0 = maxpos;
+                let x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
+                let a = (x1 + x3 - 2 * x2) / 2;
+                let b = (x3 - x1) / 2;
+                if (a) T0 = T0 - b / (2 * a);
+                return sampleRate / T0;
             }
-        }
-
-        function showTab(chord) {
-            document.getElementById('tab-instruction').innerText = `Visualizzando: ${chord.name} (Drop 2 - Corde 1,2,3,4)`;
-            
-            // Tab array order: E(1), B(2), G(3), D(4)
-            // Nel JS sopra ho messo l'ordine [E, B, G, D]
-            
-            const strings = ['string-e', 'string-b', 'string-g', 'string-d'];
-            
-            // Pulisci vecchie note
-            strings.forEach(id => {
-                document.getElementById(id).innerHTML = ''; 
-            });
-
-            // Disegna nuove note
-            chord.tab.forEach((fret, index) => {
-                const stringDiv = document.getElementById(strings[index]);
-                const noteDiv = document.createElement('div');
-                noteDiv.className = 'tab-note';
-                noteDiv.innerText = fret;
-                
-                // Posiziona visivamente sul "manico" (percentuale approssimativa per demo)
-                // Diciamo che il manico visibile va dal tasto 0 al 18
-                let leftPos = (fret / MAX_FRETS) * 100; 
-                noteDiv.style.left = leftPos + '%';
-                
-                stringDiv.appendChild(noteDiv);
-            });
-        }
-
-        // Avvia subito in DO all'apertura
-        window.onload = () => {
-            drawFretboardGrid();
-            renderScale();
         };
 
+        // Avvia l'applicazione
+        window.onload = () => {
+            BarryHarrisApp.init();
+        };
     </script>
 </body>
 </html>
