@@ -119,7 +119,7 @@
         .fret-line {
             position: absolute;
             top: 0;
-            height: 150px; /* 6 corde * 25px */
+            height: 100px; /* 4 corde * 25px */
             width: 1px;
             background: #333;
             z-index: 0;
@@ -167,29 +167,21 @@
             <option value="minor6">Minor 6 Diminished</option>
         </select>
 
-        <label>STRING SET: </label>
-        <select id="stringSet">
-            <option value="top">Top 4 (1-2-3-4)</option>
-            <option value="middle">Middle 4 (2-3-4-5)</option>
-            <option value="bottom">Bottom 4 (3-4-5-6)</option>
-        </select>
-
         <button onclick="renderScale()">CALCULATE LOGIC</button>
+        <button onclick="playScale()" style="border-color: #4CAF50; color: #4CAF50;">PLAY SCALE</button>
     </div>
 
     <div id="scaleGrid" class="scale-container">
         </div>
 
     <div class="fretboard-display">
-        <h3>DROP 2 VOICING</h3>
+        <h3>DROP 2 VOICING (Top 4 Strings)</h3>
         <p id="tab-instruction">Clicca su un accordo sopra per vederlo qui.</p>
         <div id="tab-visualizer">
             <div class="tab-line" id="string-e"></div>
             <div class="tab-line" id="string-b"></div>
             <div class="tab-line" id="string-g"></div>
             <div class="tab-line" id="string-d"></div>
-            <div class="tab-line" id="string-a"></div>
-            <div class="tab-line" id="string-E"></div>
         </div>
     </div>
 
@@ -232,13 +224,6 @@
             ]
         };
 
-        // Configurazione Set Corde
-        const STRING_SETS = {
-            top:    { name: "Top 4 (1-2-3-4)",    strings: ['string-e', 'string-b', 'string-g', 'string-d'], offsets: [0, 0, 0, 0],    midiBase: [64, 59, 55, 50] },
-            middle: { name: "Middle 4 (2-3-4-5)", strings: ['string-b', 'string-g', 'string-d', 'string-a'], offsets: [5, 4, 5, 5],    midiBase: [59, 55, 50, 45] },
-            bottom: { name: "Bottom 4 (3-4-5-6)", strings: ['string-g', 'string-d', 'string-a', 'string-E'], offsets: [9, 9, 10, 10],  midiBase: [55, 50, 45, 40] }
-        };
-
         function getNoteName(midiIndex, useSharps) {
             const normalized = (midiIndex % 12 + 12) % 12;
             return useSharps ? NOTES_SHARP[normalized] : NOTES_FLAT[normalized];
@@ -247,9 +232,6 @@
         function generateChords(rootName, scaleType) {
             let rootIndex = NOTES_FLAT.indexOf(rootName);
             if (rootIndex === -1) rootIndex = NOTES_SHARP.indexOf(rootName);
-            
-            const setKey = document.getElementById('stringSet').value;
-            const currentSet = STRING_SETS[setKey];
             
             // Euristica per diesis/bemolli
             const useSharps = ['G', 'D', 'A', 'E', 'B', 'F#', 'C#'].includes(rootName);
@@ -277,16 +259,13 @@
                     return getNoteName(rootIndex + intervals[i], useSharps);
                 }).join('-');
                 
-                // 4. Calcola Tablatura (Trasposizione + Set Offset)
-                // Applica offset del set (es. sposta da corde alte a basse)
-                const shapeWithSetOffset = shape.tab.map((f, i) => f + currentSet.offsets[i]);
-                
+                // 4. Calcola Tablatura (Trasposizione)
                 let shift = rootIndex; // C=0
                 // Se l'accordo va troppo in alto (> tasto 19), abbassa di un'ottava
-                const maxFret = Math.max(...shapeWithSetOffset);
+                const maxFret = Math.max(...shape.tab);
                 if (maxFret + shift > 19) shift -= 12;
                 
-                const tab = shapeWithSetOffset.map(f => f + shift);
+                const tab = shape.tab.map(f => f + shift);
                 
                 return { name, type: shape.type, notes: notesList, tab };
             });
@@ -302,11 +281,9 @@
                 audioCtx.resume();
             }
 
-            const setKey = document.getElementById('stringSet').value;
-            const currentSet = STRING_SETS[setKey];
-            
-            // MIDI base dipende dal set
-            const baseMidi = currentSet.midiBase;
+            // Ordine corde nell'array tab: [E cantino, B, G, D]
+            // MIDI base: E4=64, B3=59, G3=55, D3=50
+            const baseMidi = [64, 59, 55, 50];
             const now = audioCtx.currentTime;
 
             chord.tab.forEach((fret, index) => {
@@ -330,6 +307,39 @@
                 osc.start(now);
                 osc.stop(now + 2.0);
             });
+        }
+
+        async function playScale() {
+            // Rigenera la scala per assicurarsi che UI e Audio siano sincronizzati con i selettori
+            renderScale();
+            
+            const key = document.getElementById('keySelect').value;
+            const type = document.getElementById('scaleType').value;
+            const chords = generateChords(key, type);
+            const cards = document.querySelectorAll('.chord-card');
+
+            for (let i = 0; i < chords.length; i++) {
+                const chord = chords[i];
+                const card = cards[i];
+
+                // Feedback Visivo: evidenzia la card corrente
+                if (card) {
+                    card.style.transform = "translateY(-10px)";
+                    card.style.borderColor = "#fff";
+                }
+                
+                showTab(chord);
+                playChord(chord);
+
+                // Attendi prima del prossimo accordo
+                await new Promise(r => setTimeout(r, 800));
+
+                // Rimuovi evidenziazione
+                if (card) {
+                    card.style.transform = "";
+                    card.style.borderColor = "";
+                }
+            }
         }
 
         function renderScale() {
@@ -387,20 +397,21 @@
         }
 
         function showTab(chord) {
-            const setKey = document.getElementById('stringSet').value;
-            const currentSet = STRING_SETS[setKey];
+            document.getElementById('tab-instruction').innerText = `Visualizzando: ${chord.name} (Drop 2 - Corde 1,2,3,4)`;
             
-            document.getElementById('tab-instruction').innerText = `Visualizzando: ${chord.name} (${currentSet.name})`;
+            // Tab array order: E(1), B(2), G(3), D(4)
+            // Nel JS sopra ho messo l'ordine [E, B, G, D]
             
-            // Pulisci tutte le corde (anche quelle non usate)
-            const allStrings = ['string-e', 'string-b', 'string-g', 'string-d', 'string-a', 'string-E'];
-            allStrings.forEach(id => document.getElementById(id).innerHTML = '');
+            const strings = ['string-e', 'string-b', 'string-g', 'string-d'];
             
+            // Pulisci vecchie note
+            strings.forEach(id => {
+                document.getElementById(id).innerHTML = ''; 
+            });
+
             // Disegna nuove note
-            const activeStrings = currentSet.strings;
-            
             chord.tab.forEach((fret, index) => {
-                const stringDiv = document.getElementById(activeStrings[index]);
+                const stringDiv = document.getElementById(strings[index]);
                 const noteDiv = document.createElement('div');
                 noteDiv.className = 'tab-note';
                 noteDiv.innerText = fret;
