@@ -342,25 +342,42 @@
             },
             MAX_FRETS: 20,
             REF_SHAPES: {
+                // Ogni shape ora è un array di 4 inversioni per il Drop 2
                 major6: [
-                    { type: 'tonic', tab: [5,5,5,5], suffix: '6' },
-                    { type: 'dim',   tab: [7,6,7,6], suffix: 'dim7' },
-                    { type: 'tonic', tab: [8,8,9,7], suffix: '6' },
-                    { type: 'dim',   tab: [10,9,10,9], suffix: 'dim7' },
-                    { type: 'tonic', tab: [12,13,12,10], suffix: '6' },
-                    { type: 'dim',   tab: [13,12,13,12], suffix: 'dim7' },
-                    { type: 'tonic', tab: [15,17,14,14], suffix: '6' },
-                    { type: 'dim',   tab: [16,15,16,15], suffix: 'dim7' }
+                    // C6 Inversions (Root, 1st, 2nd, 3rd)
+                    { type: 'tonic', tabs: [[5,5,5,5], [8,8,9,7], [12,13,12,10], [15,17,14,14]], suffix: '6' },
+                    // Ddim7 Inversions
+                    { type: 'dim',   tabs: [[7,6,7,6], [10,9,10,9], [13,12,13,12], [16,15,16,15]], suffix: 'dim7' },
+                    // C6/E
+                    { type: 'tonic', tabs: [[8,8,9,7], [12,13,12,10], [15,17,14,14], [17,17,17,17]], suffix: '6' },
+                    // Fdim7
+                    { type: 'dim',   tabs: [[10,9,10,9], [13,12,13,12], [16,15,16,15], [19,18,19,18]], suffix: 'dim7' },
+                    // C6/G
+                    { type: 'tonic', tabs: [[12,13,12,10], [15,17,14,14], [17,17,17,17], [20,20,21,19]], suffix: '6' },
+                    // Abdim7
+                    { type: 'dim',   tabs: [[13,12,13,12], [16,15,16,15], [19,18,19,18], [22,21,22,21]], suffix: 'dim7' },
+                    // C6/A
+                    { type: 'tonic', tabs: [[15,17,14,14], [17,17,17,17], [20,20,21,19], [24,25,24,22]], suffix: '6' },
+                    // Bdim7
+                    { type: 'dim',   tabs: [[16,15,16,15], [19,18,19,18], [22,21,22,21], [25,24,25,24]], suffix: 'dim7' }
                 ],
                 minor6: [
-                    { type: 'tonic', tab: [5,4,5,5], suffix: 'm6' },
-                    { type: 'dim',   tab: [7,6,7,6], suffix: 'dim7' },
-                    { type: 'tonic', tab: [8,8,8,7], suffix: 'm6' },
-                    { type: 'dim',   tab: [10,9,10,9], suffix: 'dim7' },
-                    { type: 'tonic', tab: [11,10,12,10], suffix: 'm6' },
-                    { type: 'dim',   tab: [13,12,13,12], suffix: 'dim7' },
-                    { type: 'tonic', tab: [15,13,14,13], suffix: 'm6' },
-                    { type: 'dim',   tab: [16,15,16,15], suffix: 'dim7' }
+                    // Cm6 Inversions
+                    { type: 'tonic', tabs: [[5,4,5,5], [8,8,8,7], [11,10,12,10], [15,13,14,13]], suffix: 'm6' },
+                    // Ddim7
+                    { type: 'dim',   tabs: [[7,6,7,6], [10,9,10,9], [13,12,13,12], [16,15,16,15]], suffix: 'dim7' },
+                    // Cm6/Eb
+                    { type: 'tonic', tabs: [[8,8,8,7], [11,10,12,10], [15,13,14,13], [16,17,16,15]], suffix: 'm6' },
+                    // Fdim7
+                    { type: 'dim',   tabs: [[10,9,10,9], [13,12,13,12], [16,15,16,15], [19,18,19,18]], suffix: 'dim7' },
+                    // Cm6/G
+                    { type: 'tonic', tabs: [[11,10,12,10], [15,13,14,13], [16,17,16,15], [20,20,20,19]], suffix: 'm6' },
+                    // Abdim7
+                    { type: 'dim',   tabs: [[13,12,13,12], [16,15,16,15], [19,18,19,18], [22,21,22,21]], "suffix": 'dim7' },
+                    // Cm6/A
+                    { type: 'tonic', tabs: [[15,13,14,13], [16,17,16,15], [20,20,20,19], [23,22,24,22]], suffix: 'm6' },
+                    // Bdim7
+                    { type: 'dim',   tabs: [[16,15,16,15], [19,18,19,18], [22,21,22,21], [25,24,25,24]], suffix: 'dim7' }
                 ]
             },
             STRING_SETS: {
@@ -631,12 +648,14 @@
                     const indices = (shape.type === 'tonic') ? [0, 2, 4, 6] : [1, 3, 5, 7];
                     const notesList = indices.map(i => this.getNoteName(rootIndex + intervals[i], useSharps)).join('-');
                     
-                    const shapeWithSetOffset = shape.tab.map((f, i) => f + currentSet.offsets[i]);
+                    // Ora si deve scegliere un'inversione. Per semplicità, prendiamo la prima.
+                    const chosenTab = shape.tabs[0]; // Potrebbe diventare un parametro
+                    const shapeWithSetOffset = chosenTab.map((f, i) => f + currentSet.offsets[i]);
                     let shift = rootIndex;
                     const maxFret = Math.max(...shapeWithSetOffset);
                     if (maxFret + shift > 19) shift -= 12;
                     
-                    const tab = shapeWithSetOffset.map(f => f + shift);
+                    const tab = shapeWithSetOffset.map(f => f + shift); // La logica di trasposizione rimane
                     
                     return { name, type: shape.type, notes: notesList, tab };
                 });
