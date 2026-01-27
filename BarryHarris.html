@@ -1112,22 +1112,21 @@
 
                 if (this.audioCtx.state === 'suspended') await this.audioCtx.resume();
 
-                const noteDuration = 60 / lick.bpm; // Durata di una semiminima in secondi
+                const noteDuration = 60 / lick.bpm;
                 const currentSet = this.STRING_SETS[lick.stringSet];
+                const startTime = this.audioCtx.currentTime;
 
                 for (let i = 0; i < lick.sequence.length; i++) {
                     const note = lick.sequence[i];
-                    const playTime = this.audioCtx.currentTime + i * noteDuration;
+                    const playTime = startTime + i * noteDuration;
 
                     const midi = currentSet.midiBase[note.stringIndex] + note.fret;
-                    this.playSingleMidiNote(midi, playTime, noteDuration * 0.9); // Suona la nota
+                    this.playSingleMidiNote(midi, playTime, noteDuration * 0.9);
 
                     // Animazione visiva
                     const noteDiv = document.getElementById(`lick-note-${i}`);
                     setTimeout(() => { if (noteDiv) noteDiv.classList.add('playing'); }, i * noteDuration * 1000);
                     setTimeout(() => { if (noteDiv) noteDiv.classList.remove('playing'); }, (i + 0.9) * noteDuration * 1000);
-
-                    await new Promise(r => setTimeout(r, noteDuration * 1000)); // Attendi la durata della nota
                 }
             },
         };
