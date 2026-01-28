@@ -991,16 +991,12 @@
             playHiHat: function(time) { // Suono "Jazz" tipo rim-click
                 const noise = this.audioCtx.createBufferSource();
                 noise.buffer = this.noiseBuffer;
-                
 
-                gain.gain.setValueAtTime(0.3, time);
-                gain.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
                 const filter = this.audioCtx.createBiquadFilter();
                 filter.type = 'bandpass';
                 filter.frequency.setValueAtTime(1500, time); // Frequenza "legnosa"
                 filter.Q.value = 10;
 
-                osc.connect(filter);
                 const gain = this.audioCtx.createGain();
                 gain.gain.setValueAtTime(0, time);
                 gain.gain.linearRampToValueAtTime(0.7, time + 0.01); // Attacco rapido
@@ -1009,9 +1005,6 @@
                 noise.connect(filter);
                 filter.connect(gain);
                 gain.connect(this.audioCtx.destination);
-
-                osc.start(time);
-                osc.stop(time + 0.1);
                 noise.start(time);
                 noise.stop(time + 0.1);
             },
