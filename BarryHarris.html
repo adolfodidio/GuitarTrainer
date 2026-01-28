@@ -580,10 +580,10 @@
             },
 
             // --- Metodi Audio ---
-            playChord: function(chord) { // Per accordi
+            playChord: function(chord, stringSetKey) { // Per accordi
                 if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
 
-                const currentSet = this.STRING_SETS[this.settings.stringSet];
+                const currentSet = this.STRING_SETS[stringSetKey];
                 const baseMidi = currentSet.midiBase;
                 const now = this.audioCtx.currentTime;
 
@@ -648,8 +648,8 @@
                 }
             },
 
-            showTab: function(chord, highlightNotes = []) {
-                const currentSet = this.STRING_SETS[this.settings.stringSet];
+            showTab: function(chord, stringSetKey, highlightNotes = []) {
+                const currentSet = this.STRING_SETS[stringSetKey];
                 document.getElementById('tab-instruction').innerText = `Visualizzando: ${chord.name} (${currentSet.name})`;
                 
                 const allStrings = ['string-e', 'string-b', 'string-g', 'string-d', 'string-a', 'string-E'];
@@ -723,8 +723,8 @@
                 chords.forEach((chord) => {
                     const card = this.createGenericCard(chord);
                     card.onclick = () => {
-                        this.showTab(chord);
-                        this.playChord(chord);
+                        this.showTab(chord, this.settings.stringSet);
+                        this.playChord(chord, this.settings.stringSet);
                     };
                     container.appendChild(card);
                 });
@@ -744,8 +744,8 @@
                         card.style.borderColor = "#fff";
                     }
                     
-                    this.showTab(chord);
-                    this.playChord(chord);
+                    this.showTab(chord, this.settings.stringSet);
+                    this.playChord(chord, this.settings.stringSet);
 
                     await new Promise(r => setTimeout(r, 800));
 
@@ -813,7 +813,7 @@
                     <span class="chord-name">${chord.name}</span>
                     <div class="chord-notes">${chord.notes}</div>
                 `;
-                card.onclick = () => { this.showTab(chord); this.playChord(chord); };
+                card.onclick = () => { this.showTab(chord, this.settings.stringSet); this.playChord(chord, this.settings.stringSet); };
                 container.appendChild(card);
             },
 
@@ -836,23 +836,16 @@
                         <div class="chord-notes">${chordData.notes}</div>
                     `;
                     card.onclick = () => {
-                        // Salva l'impostazione originale del set di corde
-                        const originalStringSet = this.settings.stringSet;
-                        // Forza l'uso del set 'middle' per visualizzazione e audio, dato che i voicing sono stati creati per quello
-                        this.settings.stringSet = 'middle';
-
                         const chordObject = {
                             name: chordData.name,
                             notes: chordData.notes,
                             tab: chordData.tab,
                             intervals: intervals
                         };
-
-                        this.showTab(chordObject);
-                        this.playChord(chordObject);
-
-                        // Ripristina l'impostazione originale
-                        this.settings.stringSet = originalStringSet;
+                        
+                        // Passa 'middle' esplicitamente, senza modificare lo stato globale
+                        this.showTab(chordObject, 'middle');
+                        this.playChord(chordObject, 'middle');
                     };
                     container.appendChild(card);
                 });
