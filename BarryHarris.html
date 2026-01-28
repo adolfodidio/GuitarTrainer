@@ -367,7 +367,7 @@
                 major6: [0, 2, 4, 5, 7, 8, 9, 11, 12], // 1, 2, 3, 4, 5, b6, 6, 7, 8
                 minor6: [0, 2, 3, 5, 7, 8, 9, 11, 12]  // 1, 2, b3, 4, 5, b6, 6, 7, 8
             },
-            MAX_FRETS: 20,
+            MAX_FRETS: 22,
             REF_SHAPES: {
                 // Ogni shape ora è un array di 4 inversioni per il Drop 2
                 major6: [
@@ -728,9 +728,9 @@
                     // Ora si deve scegliere un'inversione. Per semplicità, prendiamo la prima.
                     const chosenTab = shape.tabs[0]; // Potrebbe diventare un parametro
                     const shapeWithSetOffset = chosenTab.map((f, i) => f + currentSet.offsets[i]);
-                    let shift = rootIndex;
-                    const maxFret = Math.max(...shapeWithSetOffset);
-                    if (maxFret + shift > 19) shift -= 12;
+                    let shift = rootIndex;                    
+                    const maxFretInShape = Math.max(...shapeWithSetOffset);
+                    if (maxFretInShape + shift > this.MAX_FRETS - 1) shift -= 12;
                     
                     const tab = shapeWithSetOffset.map(f => f + shift); // La logica di trasposizione rimane
                     
@@ -806,9 +806,9 @@
                 let shift = rootIndex - 2; 
                 const currentSet = this.STRING_SETS[this.settings.stringSet];
                 const baseShape = [7,6,7,6]; 
-                let parentTab = baseShape.map((f, i) => f + currentSet.offsets[i] + shift);
-                
-                if (Math.max(...parentTab) > 18) parentTab = parentTab.map(f => f - 12);
+                let parentTab = baseShape.map((f, i) => f + currentSet.offsets[i] + shift); 
+
+                if (Math.max(...parentTab) > this.MAX_FRETS - 4) parentTab = parentTab.map(f => f - 12);
                 if (Math.min(...parentTab) < 0) parentTab = parentTab.map(f => f + 12);
 
                 const parentIntervals = this.calculateChordIntervals(parentTab, rootIndex, this.settings.stringSet);
