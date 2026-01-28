@@ -332,7 +332,7 @@
                 Clicca su un accordo per visualizzarlo e ascoltarlo.
             </p>
         </div>
-        <div id="harmonizationGrid" class="scale-container" style="grid-template-columns: repeat(7, 1fr);">
+        <div id="harmonizationGrid" class="scale-container" style="grid-template-columns: repeat(8, 1fr);">
             <!-- Griglia Armonizzazione -->
         </div>
     </div>
@@ -442,14 +442,15 @@
                     stringSet: 'top'
                 }
             },
-            MAJOR_SCALE_HARMONIZATION: [
-                { degree: 'I', name: 'Cmaj7', quality: 'maj7', notes: 'C-E-G-B', tab: [8, 8, 9, 10] },
-                { degree: 'II', name: 'Dm7', quality: 'm7', notes: 'D-F-A-C', tab: [10, 10, 10, 12] },
-                { degree: 'III', name: 'Em7', quality: 'm7', notes: 'E-G-B-D', tab: [12, 12, 12, 14] },
-                { degree: 'IV', name: 'Fmaj7', quality: 'maj7', notes: 'F-A-C-E', tab: [13, 13, 14, 15] },
-                { degree: 'V', name: 'G7', quality: 'dom7', notes: 'G-B-D-F', tab: [3, 3, 4, 5] },
-                { degree: 'VI', name: 'Am7', quality: 'm7', notes: 'A-C-E-G', tab: [5, 5, 5, 7] },
-                { degree: 'VII', name: 'Bm7b5', quality: 'm7b5', notes: 'B-D-F-A', tab: [7, 6, 7, 8] }
+            MAJOR_SCALE_HARMONIZATION: [ // Voicings per set di corde "middle" (2-3-4-5) in crescendo
+                { degree: 'I', name: 'Cmaj7', quality: 'maj7', notes: 'C-E-G-B', tab: [5, 4, 5, 3] },
+                { degree: 'II', name: 'Dm7', quality: 'm7', notes: 'D-F-A-C', tab: [6, 5, 7, 5] },
+                { degree: 'III', name: 'Em7', quality: 'm7', notes: 'E-G-B-D', tab: [8, 7, 9, 7] },
+                { degree: 'IV', name: 'Fmaj7', quality: 'maj7', notes: 'F-A-C-E', tab: [10, 9, 10, 8] },
+                { degree: 'V', name: 'G7', quality: 'dom7', notes: 'G-B-D-F', tab: [12, 10, 12, 10] },
+                { degree: 'VI', name: 'Am7', quality: 'm7', notes: 'A-C-E-G', tab: [13, 12, 14, 12] },
+                { degree: 'VII', name: 'Bm7b5', quality: 'm7b5', notes: 'B-D-F-A', tab: [15, 14, 15, 14] },
+                { degree: 'VIII', name: 'Cmaj7', quality: 'maj7', notes: 'C-E-G-B', tab: [17, 16, 17, 15] }
             ],
 
             // --- Stato dell'Applicazione ---
@@ -822,9 +823,9 @@
                 container.innerHTML = '';
 
                 this.MAJOR_SCALE_HARMONIZATION.forEach(chordData => {
-                    // Calcola gli intervalli basati sul set di corde 'top' per cui sono stati creati i voicing
+                    // Calcola gli intervalli basati sul set di corde 'middle' per cui sono stati creati i voicing
                     const rootNoteIndex = this.NOTES_FLAT.indexOf(chordData.name[0]);
-                    const intervals = this.calculateChordIntervals(chordData.tab, rootNoteIndex, 'top');
+                    const intervals = this.calculateChordIntervals(chordData.tab, rootNoteIndex, 'middle');
 
                     const card = document.createElement('div');
                     card.className = `chord-card`;
@@ -837,8 +838,8 @@
                     card.onclick = () => {
                         // Salva l'impostazione originale del set di corde
                         const originalStringSet = this.settings.stringSet;
-                        // Forza l'uso del set 'top' per visualizzazione e audio
-                        this.settings.stringSet = 'top';
+                        // Forza l'uso del set 'middle' per visualizzazione e audio, dato che i voicing sono stati creati per quello
+                        this.settings.stringSet = 'middle';
 
                         const chordObject = {
                             name: chordData.name,
