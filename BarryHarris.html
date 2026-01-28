@@ -202,6 +202,7 @@
         <button onclick="BarryHarrisApp.openRoom(3)" id="btn-room-3" class="nav-btn">STANZA 3: Rhythm Boss</button>
         <button onclick="BarryHarrisApp.openRoom(4)" id="btn-room-4" class="nav-btn">STANZA 4: Sing It</button>
         <button onclick="BarryHarrisApp.openRoom(5)" id="btn-room-5" class="nav-btn">STANZA 5: Lick Library</button>
+        <button onclick="BarryHarrisApp.openRoom(6)" id="btn-room-6" class="nav-btn">STANZA 6: Armonizzazione</button>
     </div>
 
     <!-- STANZA 1: LOGIC ENGINE -->
@@ -322,6 +323,20 @@
         </div>
     </div>
 
+    <!-- STANZA 6: ARMONIZZAZIONE SCALA MAGGIORE -->
+    <div id="room-6" class="room-section">
+        <div class="controls" style="border-color: #00BCD4;">
+            <h3 style="margin-top:0; color: #00BCD4;">ARMONIZZAZIONE SCALA MAGGIORE</h3>
+            <p style="font-size: 0.8em; max-width: 600px; margin-bottom: 20px;">
+                Esplora gli accordi a 4 voci (Drop 2) costruiti su ogni grado della scala di Do Maggiore.
+                Clicca su un accordo per visualizzarlo e ascoltarlo.
+            </p>
+        </div>
+        <div id="harmonizationGrid" class="scale-container" style="grid-template-columns: repeat(7, 1fr);">
+            <!-- Griglia Armonizzazione -->
+        </div>
+    </div>
+
     <div class="fretboard-display">
         <h3>VISUALIZZATORE (Drop 2)</h3>
         <p id="tab-instruction">Clicca su un accordo sopra per vederlo qui.</p>
@@ -427,6 +442,15 @@
                     stringSet: 'top'
                 }
             },
+            MAJOR_SCALE_HARMONIZATION: [
+                { degree: 'I', name: 'Cmaj7', quality: 'maj7', notes: 'C-E-G-B', tab: [8, 8, 9, 10] },
+                { degree: 'II', name: 'Dm7', quality: 'm7', notes: 'D-F-A-C', tab: [10, 10, 10, 12] },
+                { degree: 'III', name: 'Em7', quality: 'm7', notes: 'E-G-B-D', tab: [12, 12, 12, 14] },
+                { degree: 'IV', name: 'Fmaj7', quality: 'maj7', notes: 'F-A-C-E', tab: [13, 13, 14, 15] },
+                { degree: 'V', name: 'G7', quality: 'dom7', notes: 'G-B-D-F', tab: [3, 3, 4, 5] },
+                { degree: 'VI', name: 'Am7', quality: 'm7', notes: 'A-C-E-G', tab: [5, 5, 5, 7] },
+                { degree: 'VII', name: 'Bm7b5', quality: 'm7b5', notes: 'B-D-F-A', tab: [7, 6, 7, 8] }
+            ],
 
             // --- Stato dell'Applicazione ---
             audioCtx: null,
@@ -515,6 +539,8 @@
                     this.renderFamily();
                 } else if (roomId === 5) {
                     this.displayLick();
+                } else if (roomId === 6) {
+                    this.renderMajorScaleHarmonization();
                 }
             },
 
@@ -526,8 +552,7 @@
                 // Ferma Pitch Detection (Stanza 4)
                 this.singing.isActive = false;
 
-                // Chiudi stream microfono se non più necessario
-                // Only stop mic stream if it's active and we're moving away from rooms 3 or 4
+                // Chiudi stream microfono se non più necessario (Stanze 3 e 4)
                 if (this.micStream && ![3, 4].includes(this.currentRoom)) {
                     this.micStream.getTracks().forEach(track => track.stop());
                     this.micStream = null;
@@ -789,6 +814,49 @@
                 `;
                 card.onclick = () => { this.showTab(chord); this.playChord(chord); };
                 container.appendChild(card);
+            },
+
+            // --- STANZA 6: ARMONIZZAZIONE ---
+            renderMajorScaleHarmonization: function() {
+                const container = document.getElementById('harmonizationGrid');
+                container.innerHTML = '';
+
+                this.MAJOR_SCALE_HARMONIZATION.forEach(chordData => {
+                    // Calcola gli intervalli basati sul set di corde 'top' per cui sono stati creati i voicing
+                    const rootNoteIndex = this.NOTES_FLAT.indexOf(chordData.name[0]);
+                    const intervals = this.calculateChordIntervals(chordData.tab, rootNoteIndex, 'top');
+
+                    const card = document.createElement('div');
+                    card.className = `chord-card`;
+                    card.style.borderTopColor = '#00BCD4'; // Colore ciano per questa stanza
+                    card.innerHTML = `
+                        <span class="chord-func">${chordData.degree}</span>
+                        <span class="chord-name">${chordData.name}</span>
+                        <div class="chord-notes">${chordData.notes}</div>
+                    `;
+                    card.onclick = () => {
+                        // Salva l'impostazione originale del set di corde
+                        const originalStringSet = this.settings.stringSet;
+                        // Forza l'uso del set 'top' per visualizzazione e audio
+                        this.settings.stringSet = 'top';
+
+                        const chordObject = {
+                            name: chordData.name,
+                            notes: chordData.notes,
+                            tab: chordData.tab,
+                            intervals: intervals
+                        };
+
+                        this.showTab(chordObject);
+                        this.playChord(chordObject);
+
+                        // Ripristina l'impostazione originale
+                        this.settings.stringSet = originalStringSet;
+                    };
+                    container.appendChild(card);
+                });
+
+                document.getElementById('tab-instruction').innerText = 'Clicca su un accordo sopra per vederlo qui.';
             },
 
             // --- STANZA 3: RHYTHM BOSS ---
