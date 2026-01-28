@@ -331,6 +331,12 @@
                 Esplora gli accordi a 4 voci (Drop 2) costruiti su ogni grado della scala di Do Maggiore.
                 Clicca su un accordo per visualizzarlo e ascoltarlo.
             </p>
+            <label>STRING SET: </label>
+            <select id="harmonizationStringSet">
+                <option value="top">Top 4 (1-2-3-4)</option>
+                <option value="middle" selected>Middle 4 (2-3-4-5)</option>
+                <option value="bottom">Bottom 4 (3-4-5-6)</option>
+            </select>
         </div>
         <div id="harmonizationGrid" class="scale-container" style="grid-template-columns: repeat(8, 1fr);">
             <!-- Griglia Armonizzazione -->
@@ -442,15 +448,31 @@
                     stringSet: 'top'
                 }
             },
-            MAJOR_SCALE_HARMONIZATION: [ // Voicings per set di corde "middle" (2-3-4-5) in crescendo
-                { degree: 'I', name: 'Cmaj7', quality: 'maj7', notes: 'C-E-G-B', tab: [5, 4, 5, 3] },
-                { degree: 'II', name: 'Dm7', quality: 'm7', notes: 'D-F-A-C', tab: [6, 5, 7, 5] },
-                { degree: 'III', name: 'Em7', quality: 'm7', notes: 'E-G-B-D', tab: [8, 7, 9, 7] },
-                { degree: 'IV', name: 'Fmaj7', quality: 'maj7', notes: 'F-A-C-E', tab: [10, 9, 10, 8] },
-                { degree: 'V', name: 'G7', quality: 'dom7', notes: 'G-B-D-F', tab: [12, 10, 12, 10] },
-                { degree: 'VI', name: 'Am7', quality: 'm7', notes: 'A-C-E-G', tab: [13, 12, 14, 12] },
-                { degree: 'VII', name: 'Bm7b5', quality: 'm7b5', notes: 'B-D-F-A', tab: [15, 14, 15, 14] },
-                { degree: 'VIII', name: 'Cmaj7', quality: 'maj7', notes: 'C-E-G-B', tab: [17, 16, 17, 15] }
+            MAJOR_SCALE_HARMONIZATION: [
+                { degree: 'I', name: 'Cmaj7', quality: 'maj7', notes: 'C-E-G-B', tabs: {
+                    top: [8, 8, 9, 10], middle: [5, 4, 5, 3], bottom: [9, 10, 10, 10]
+                }},
+                { degree: 'II', name: 'Dm7', quality: 'm7', notes: 'D-F-A-C', tabs: {
+                    top: [10, 10, 10, 12], middle: [6, 5, 7, 5], bottom: [10, 12, 12, 12]
+                }},
+                { degree: 'III', name: 'Em7', quality: 'm7', notes: 'E-G-B-D', tabs: {
+                    top: [12, 12, 12, 14], middle: [8, 7, 9, 7], bottom: [12, 14, 14, 14]
+                }},
+                { degree: 'IV', name: 'Fmaj7', quality: 'maj7', notes: 'F-A-C-E', tabs: {
+                    top: [13, 13, 14, 13], middle: [10, 9, 10, 8], bottom: [2, 3, 3, 3]
+                }},
+                { degree: 'V', name: 'G7', quality: 'dom7', notes: 'G-B-D-F', tabs: {
+                    top: [3, 3, 4, 5], middle: [12, 10, 12, 10], bottom: [4, 5, 5, 5]
+                }},
+                { degree: 'VI', name: 'Am7', quality: 'm7', notes: 'A-C-E-G', tabs: {
+                    top: [5, 5, 5, 7], middle: [13, 12, 14, 12], bottom: [5, 7, 7, 7]
+                }},
+                { degree: 'VII', name: 'Bm7b5', quality: 'm7b5', notes: 'B-D-F-A', tabs: {
+                    top: [7, 6, 7, 8], middle: [15, 14, 15, 14], bottom: [7, 8, 8, 9]
+                }},
+                { degree: 'VIII', name: 'Cmaj7', quality: 'maj7', notes: 'C-E-G-B', tabs: {
+                    top: [20, 20, 21, 22], middle: [17, 16, 17, 15], bottom: [21, 22, 22, 22]
+                }}
             ],
 
             // --- Stato dell'Applicazione ---
@@ -516,6 +538,10 @@
                     if (this.currentRoom === 1) this.renderScale(); // Re-render scale if in Logic Engine
                     if (this.currentRoom === 2) this.renderFamily(); // Re-render family if in Family Finder
                     if (this.currentRoom === 5) this.displayLick(); // Re-display lick if in Lick Library
+                });
+                document.getElementById('harmonizationStringSet').addEventListener('change', () => {
+                    // Re-render solo se la stanza 6 è attiva
+                    if (this.currentRoom === 6) this.renderMajorScaleHarmonization();
                 });
 
                 this.drawFretboardGrid();
@@ -821,11 +847,14 @@
             renderMajorScaleHarmonization: function() {
                 const container = document.getElementById('harmonizationGrid');
                 container.innerHTML = '';
+                const selectedSet = document.getElementById('harmonizationStringSet').value;
 
                 this.MAJOR_SCALE_HARMONIZATION.forEach(chordData => {
-                    // Calcola gli intervalli basati sul set di corde 'middle' per cui sono stati creati i voicing
+                    const tab = chordData.tabs[selectedSet];
+                    if (!tab) return; // Salta se non ci sono voicing per questo set
+
                     const rootNoteIndex = this.NOTES_FLAT.indexOf(chordData.name[0]);
-                    const intervals = this.calculateChordIntervals(chordData.tab, rootNoteIndex, 'middle');
+                    const intervals = this.calculateChordIntervals(tab, rootNoteIndex, selectedSet);
 
                     const card = document.createElement('div');
                     card.className = `chord-card`;
@@ -839,13 +868,12 @@
                         const chordObject = {
                             name: chordData.name,
                             notes: chordData.notes,
-                            tab: chordData.tab,
+                            tab: tab,
                             intervals: intervals
                         };
                         
-                        // Passa 'middle' esplicitamente, senza modificare lo stato globale
-                        this.showTab(chordObject, 'middle');
-                        this.playChord(chordObject, 'middle');
+                        this.showTab(chordObject, selectedSet);
+                        this.playChord(chordObject, selectedSet);
                     };
                     container.appendChild(card);
                 });
