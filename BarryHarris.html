@@ -337,6 +337,7 @@
                 <option value="middle" selected>Middle 4 (2-3-4-5)</option>
                 <option value="bottom">Bottom 4 (3-4-5-6)</option>
             </select>
+            <button onclick="BarryHarrisApp.playHarmonizationSequence()" style="border-color: #00BCD4; color: #00BCD4; margin-left: 10px;">SUONA PROGRESSIONE</button>
         </div>
         <div id="harmonizationGrid" class="scale-container" style="grid-template-columns: repeat(8, 1fr);">
             <!-- Griglia Armonizzazione -->
@@ -879,6 +880,42 @@
                 });
 
                 document.getElementById('tab-instruction').innerText = 'Clicca su un accordo sopra per vederlo qui.';
+            },
+
+            playHarmonizationSequence: async function() {
+                const selectedSet = document.getElementById('harmonizationStringSet').value;
+                const chordsData = this.MAJOR_SCALE_HARMONIZATION;
+                const cards = document.querySelectorAll('#harmonizationGrid .chord-card');
+
+                for (let i = 0; i < chordsData.length; i++) {
+                    const chordData = chordsData[i];
+                    const card = cards[i];
+                    const tab = chordData.tabs[selectedSet];
+
+                    if (!tab) continue; // Salta se non ci sono voicing per questo set
+
+                    if (card) {
+                        card.style.transform = "translateY(-5px)";
+                        card.style.boxShadow = "0 0 15px #00BCD4";
+                    }
+
+                    const rootNoteIndex = this.NOTES_FLAT.indexOf(chordData.name[0]);
+                    const intervals = this.calculateChordIntervals(tab, rootNoteIndex, selectedSet);
+
+                    const chordObject = {
+                        name: chordData.name,
+                        notes: chordData.notes,
+                        tab: tab,
+                        intervals: intervals
+                    };
+
+                    this.showTab(chordObject, selectedSet);
+                    this.playChord(chordObject, selectedSet);
+
+                    await new Promise(r => setTimeout(r, 800));
+
+                    if (card) { card.style.transform = ""; card.style.boxShadow = ""; }
+                }
             },
 
             // --- STANZA 3: RHYTHM BOSS ---
