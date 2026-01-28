@@ -481,6 +481,7 @@
             micStream: null,
             micAnalyser: null,
             currentRoom: 1,
+            noiseBuffer: null, // Buffer per il suono del metronomo
             settings: {
                 key: 'C',
                 scaleType: 'major6',
@@ -510,6 +511,14 @@
             init: function() {
                 this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 
+                // Crea un buffer di rumore bianco per il metronomo "jazz"
+                const bufferSize = this.audioCtx.sampleRate * 0.2; // 0.2s sono sufficienti
+                this.noiseBuffer = this.audioCtx.createBuffer(1, bufferSize, this.audioCtx.sampleRate);
+                const output = this.noiseBuffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    output[i] = Math.random() * 2 - 1;
+                }
+
                 // Popola menu Diminuito (Stanza 2)
                 const dimSelect = document.getElementById('dimSelect');
                 this.NOTES_FLAT.forEach(n => {
@@ -979,27 +988,32 @@
                 this.metronome.currentBeat = (this.metronome.currentBeat + 1) % 4;
             },
 
-            playHiHat: function(time) {
-                const osc = this.audioCtx.createOscillator();
-                const gain = this.audioCtx.createGain();
-                const filter = this.audioCtx.createBiquadFilter();
+            playHiHat: function(time) { // Suono "Jazz" tipo rim-click
+                const noise = this.audioCtx.createBufferSource();
+                noise.buffer = this.noiseBuffer;
                 
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(800, time);
-                osc.frequency.exponentialRampToValueAtTime(4000, time + 0.05); 
-                
-                filter.type = 'highpass';
-                filter.frequency.value = 7000;
 
                 gain.gain.setValueAtTime(0.3, time);
                 gain.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
+                const filter = this.audioCtx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(1500, time); // Frequenza "legnosa"
+                filter.Q.value = 10;
 
                 osc.connect(filter);
+                const gain = this.audioCtx.createGain();
+                gain.gain.setValueAtTime(0, time);
+                gain.gain.linearRampToValueAtTime(0.7, time + 0.01); // Attacco rapido
+                gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05); // Decadimento veloce
+
+                noise.connect(filter);
                 filter.connect(gain);
                 gain.connect(this.audioCtx.destination);
 
                 osc.start(time);
                 osc.stop(time + 0.1);
+                noise.start(time);
+                noise.stop(time + 0.1);
             },
 
             updateVisualBeat: function(beat) {
