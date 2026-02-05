@@ -208,7 +208,7 @@
     <!-- STANZA 1: LOGIC ENGINE -->
     <div id="room-1" class="room-section" style="display: flex;">
         <div class="controls">
-        <label>KEY (TONALITÀ): </label>
+        <label for="keySelect">KEY (TONALITÀ): </label>
         <select id="keySelect">
             <option value="C">C</option>
             <option value="Db">Db</option>
@@ -224,13 +224,13 @@
             <option value="B">B</option>
         </select>
         
-        <label>SCALE TYPE: </label>
+        <label for="scaleType">SCALE TYPE: </label>
         <select id="scaleType">
             <option value="major6">Major 6 Diminished</option>
             <option value="minor6">Minor 6 Diminished</option>
         </select>
 
-        <label>STRING SET: </label>
+        <label for="stringSet">STRING SET: </label>
         <select id="stringSet">
             <option value="top">Top 4 (1-2-3-4)</option>
             <option value="middle">Middle 4 (2-3-4-5)</option>
@@ -252,7 +252,7 @@
             <p style="font-size: 0.8em; max-width: 600px; margin-bottom: 20px;">
                 Seleziona un accordo Diminuito (Genitore). Il sistema mostrerà i 4 accordi Dominanti (Figli) generati abbassando una singola nota.
             </p>
-            <label>DIMINISHED PARENT: </label>
+            <label for="dimSelect">DIMINISHED PARENT: </label>
             <select id="dimSelect">
                 <!-- Popolato via JS -->
             </select>
@@ -311,7 +311,7 @@
             <p style="font-size: 0.8em; max-width: 600px; margin-bottom: 20px;">
                 Seleziona un lick dalla libreria per vederlo sulla tastiera e ascoltarlo.
             </p>
-            <label>SELECT LICK: </label>
+            <label for="lickSelect">SELECT LICK: </label>
             <select id="lickSelect" onchange="BarryHarrisApp.displayLick()">
                 <!-- Popolato via JS -->
             </select>
@@ -331,7 +331,7 @@
                 Esplora gli accordi a 4 voci (Drop 2) costruiti su ogni grado della scala Maggiore.
                 Clicca su un accordo per visualizzarlo e ascoltarlo.
             </p>
-            <label>KEY: </label>
+            <label for="harmonizationKeySelect">KEY: </label>
             <select id="harmonizationKeySelect">
                 <option value="C" selected>C</option>
                 <option value="Db">Db</option>
@@ -346,7 +346,7 @@
                 <option value="Bb">Bb</option>
                 <option value="B">B</option>
             </select>
-            <label style="margin-left: 10px;">STRING SET: </label>
+            <label for="harmonizationStringSet" style="margin-left: 10px;">STRING SET: </label>
             <select id="harmonizationStringSet">
                 <option value="top">Top 4 (1-2-3-4)</option>
                 <option value="middle" selected>Middle 4 (2-3-4-5)</option>
