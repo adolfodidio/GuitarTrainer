@@ -26,7 +26,7 @@
         
         <div class="space-y-4">
             <div>
-                <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Tipo di Test</label>
+                <label for="testMode" class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Tipo di Test</label>
                 <select id="testMode" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer">
                     <option value="single-note" selected>Nota Singola (Trova la nota)</option>
                     <option value="interval">Intervallo Relativo (Nota + Intervallo)</option>
@@ -34,7 +34,7 @@
             </div>
 
             <div>
-                <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Numero di Test</label>
+                <label for="numTests" class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Numero di Test</label>
                 <input type="number" id="numTests" value="20" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
             </div>
 
@@ -53,17 +53,17 @@
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Tasto Inizio</label>
+                    <label for="fretStart" class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Tasto Inizio</label>
                     <input type="number" id="fretStart" value="0" min="0" max="22" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Tasto Fine</label>
+                    <label for="fretEnd" class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Tasto Fine</label>
                     <input type="number" id="fretEnd" value="22" min="0" max="22" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 outline-none">
                 </div>
             </div>
 
             <div>
-                <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Scala Musicale</label>
+                <label for="scaleType" class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Scala Musicale</label>
                 <select id="scaleType" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer">
                     <option value="diatonic" selected>Diatonica (Do Maggiore)</option>
                     <option value="chromatic">Cromatica (Tutte le note)</option>
@@ -71,7 +71,7 @@
             </div>
 
             <div>
-                <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Tempo per risposta (s)</label>
+                <label for="timeLimit" class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Tempo per risposta (s)</label>
                 <input type="number" id="timeLimit" value="20" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 outline-none">
             </div>
 
