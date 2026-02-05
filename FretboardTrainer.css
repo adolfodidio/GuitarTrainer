@@ -35,3 +35,8 @@ body {
     z-index: 10;
     border-color: white;
 }
+
+/* Stile per la progress bar dinamica */
+#progressBar {
+    width: var(--progress-width, 0%);
+}

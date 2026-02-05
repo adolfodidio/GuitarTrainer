@@ -84,7 +84,7 @@
     <!-- Pannello Gioco -->
     <div id="game-panel" class="hidden-section w-full max-w-md flex flex-col items-center">
         <div class="w-full bg-gray-700 rounded-full h-1.5 mb-6">
-            <div id="progressBar" class="bg-indigo-500 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+            <div id="progressBar" class="bg-indigo-500 h-1.5 rounded-full transition-all duration-500"></div>
         </div>
 
         <div class="bg-gray-800 p-6 sm:p-8 rounded-3xl shadow-2xl border border-gray-700 w-full text-center relative overflow-hidden">
@@ -540,8 +540,8 @@
         }
 
         function updateProgressBar() {
-            const pct = ((session.currentTestIndex - 1) / config.numTests) * 100;
-            document.getElementById('progressBar').style.width = `${pct}%`;
+            const pct = Math.max(0, ((session.currentTestIndex - 1) / config.numTests) * 100);
+            document.getElementById('progressBar').style.setProperty('--progress-width', `${pct}%`);
         }
 
         function finishSession() {
