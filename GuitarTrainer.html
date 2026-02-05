@@ -11,6 +11,11 @@
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col items-center p-4 sm:p-6">
 
+    <!-- Countdown Overlay -->
+    <div id="countdown-overlay" class="hidden-section fixed inset-0 bg-gray-900/80 backdrop-blur-sm flex items-center justify-center z-50">
+        <div id="countdown-text" class="text-9xl font-extrabold text-white"></div>
+    </div>
+
     <a href="index.html" class="absolute top-4 left-4 text-gray-400 hover:text-indigo-400 transition-colors text-sm sm:text-base">
         &larr; Torna al menu
     </a>
@@ -417,7 +422,10 @@
             for(let i=1; i<=6; i++) {
                 if(document.getElementById(`str${i}`).checked) selectedStrings.push(i);
             }
-            if(selectedStrings.length === 0) { return; }
+            if(selectedStrings.length === 0) { 
+                alert("Seleziona almeno una corda per iniziare!");
+                return; 
+            }
 
             config.numTests = parseInt(document.getElementById('numTests').value);
             config.fretStart = parseInt(document.getElementById('fretStart').value);
@@ -428,16 +436,42 @@
             config.selectedStrings = selectedStrings;
 
             document.getElementById('settings-panel').classList.add('hidden-section');
-            document.getElementById('results-panel').classList.add('hidden-section');
-            document.getElementById('game-panel').classList.remove('hidden-section');
-            
+            const countdownOverlay = document.getElementById('countdown-overlay');
+            const countdownText = document.getElementById('countdown-text');
+            countdownOverlay.classList.remove('hidden-section');
+
+            // Pre-inizializza l'audio durante il countdown per evitare ritardi
             initAudio();
-            isListening = true;
-            session.currentTestIndex = 0;
-            session.correctCount = 0;
-            session.totalTime = 0;
-            session.tests = [];
-            nextTest();
+
+            let count = 5;
+
+            function doCountdown() {
+                if (count > 0) {
+                    countdownText.innerText = count;
+                    countdownText.classList.remove('countdown-tick');
+                    // Forza il reflow per riavviare l'animazione
+                    void countdownText.offsetWidth; 
+                    countdownText.classList.add('countdown-tick');
+                    
+                    count--;
+                    setTimeout(doCountdown, 1000);
+                } else {
+                    // Countdown finito
+                    countdownOverlay.classList.add('hidden-section');
+                    
+                    document.getElementById('results-panel').classList.add('hidden-section');
+                    document.getElementById('game-panel').classList.remove('hidden-section');
+                    
+                    isListening = true;
+                    session.currentTestIndex = 0;
+                    session.correctCount = 0;
+                    session.totalTime = 0;
+                    session.tests = [];
+                    nextTest();
+                }
+            }
+
+            doCountdown();
         }
 
         function nextTest() {
