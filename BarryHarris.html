@@ -328,10 +328,25 @@
         <div class="controls" style="border-color: #00BCD4;">
             <h3 style="margin-top:0; color: #00BCD4;">ARMONIZZAZIONE SCALA MAGGIORE</h3>
             <p style="font-size: 0.8em; max-width: 600px; margin-bottom: 20px;">
-                Esplora gli accordi a 4 voci (Drop 2) costruiti su ogni grado della scala di Do Maggiore.
+                Esplora gli accordi a 4 voci (Drop 2) costruiti su ogni grado della scala Maggiore.
                 Clicca su un accordo per visualizzarlo e ascoltarlo.
             </p>
-            <label>STRING SET: </label>
+            <label>KEY: </label>
+            <select id="harmonizationKeySelect">
+                <option value="C" selected>C</option>
+                <option value="Db">Db</option>
+                <option value="D">D</option>
+                <option value="Eb">Eb</option>
+                <option value="E">E</option>
+                <option value="F">F</option>
+                <option value="Gb">Gb</option>
+                <option value="G">G</option>
+                <option value="Ab">Ab</option>
+                <option value="A">A</option>
+                <option value="Bb">Bb</option>
+                <option value="B">B</option>
+            </select>
+            <label style="margin-left: 10px;">STRING SET: </label>
             <select id="harmonizationStringSet">
                 <option value="top">Top 4 (1-2-3-4)</option>
                 <option value="middle" selected>Middle 4 (2-3-4-5)</option>
@@ -551,6 +566,9 @@
                 });
                 document.getElementById('harmonizationStringSet').addEventListener('change', () => {
                     // Re-render solo se la stanza 6 è attiva
+                    if (this.currentRoom === 6) this.renderMajorScaleHarmonization();
+                });
+                document.getElementById('harmonizationKeySelect').addEventListener('change', () => {
                     if (this.currentRoom === 6) this.renderMajorScaleHarmonization();
                 });
 
@@ -858,31 +876,21 @@
                 const container = document.getElementById('harmonizationGrid');
                 container.innerHTML = '';
                 const selectedSet = document.getElementById('harmonizationStringSet').value;
+                const selectedKey = document.getElementById('harmonizationKeySelect').value;
 
-                this.MAJOR_SCALE_HARMONIZATION.forEach(chordData => {
-                    const tab = chordData.tabs[selectedSet];
-                    if (!tab) return; // Salta se non ci sono voicing per questo set
+                const transposedChords = this.getTransposedHarmonization(selectedKey, selectedSet);
 
-                    const rootNoteIndex = this.NOTES_FLAT.indexOf(chordData.name[0]);
-                    const intervals = this.calculateChordIntervals(tab, rootNoteIndex, selectedSet);
-
+                transposedChords.forEach(chordObject => {
                     const card = document.createElement('div');
                     card.className = `chord-card`;
                     card.style.borderTopColor = '#00BCD4'; // Colore ciano per questa stanza
                     card.innerHTML = `
-                        <span class="chord-func">${chordData.degree}</span>
-                        <span class="chord-name">${chordData.name}</span>
-                        <div class="chord-notes">${chordData.notes}</div>
+                        <span class="chord-func">${chordObject.degree}</span>
+                        <span class="chord-name">${chordObject.name}</span>
+                        <div class="chord-notes">${chordObject.notes}</div>
                     `;
                     card.onclick = () => {
-                        const chordObject = {
-                            name: chordData.name,
-                            notes: chordData.notes,
-                            tab: tab,
-                            intervals: intervals
-                        };
-                        
-                        this.showTab(chordObject, selectedSet);
+                        this.showTab(chordObject, selectedSet); // Usa l'oggetto già pronto
                         this.playChord(chordObject, selectedSet);
                     };
                     container.appendChild(card);
@@ -891,32 +899,61 @@
                 document.getElementById('tab-instruction').innerText = 'Clicca su un accordo sopra per vederlo qui.';
             },
 
+            getTransposedHarmonization: function(key, stringSet) {
+                const transposeShift = this.NOTES_FLAT.indexOf(key);
+                if (transposeShift === -1) return [];
+                
+                const useSharps = ['G', 'D', 'A', 'E', 'B', 'F#', 'C#'].includes(key);
+                const majorScaleIntervals = [0, 2, 4, 5, 7, 9, 11, 12];
+
+                return this.MAJOR_SCALE_HARMONIZATION.map((chordData, index) => {
+                    const originalTab = chordData.tabs[stringSet];
+                    if (!originalTab) return null;
+
+                    const tab = originalTab.map(f => f + transposeShift);
+
+                    // Se l'accordo è troppo alto, lo traspone un'ottava sotto per mantenerlo suonabile.
+                    if (Math.max(...tab) > this.MAX_FRETS) {
+                        for (let i = 0; i < tab.length; i++) { tab[i] -= 12; }
+                    }
+
+                    const degreeRootNoteIndex = (transposeShift + majorScaleIntervals[index]) % 12;
+                    const degreeRootNoteName = this.getNoteName(degreeRootNoteIndex, useSharps);
+                    const newName = degreeRootNoteName + chordData.name.replace(/^[A-G][#b]?/, '');
+
+                    const originalNotes = chordData.notes.split('-');
+                    const newNotes = originalNotes.map(note => {
+                        const originalNoteIndex = this.NOTES_FLAT.indexOf(note);
+                        const newNoteIndex = (originalNoteIndex + transposeShift) % 12;
+                        return this.getNoteName(newNoteIndex, useSharps);
+                    }).join('-');
+                    
+                    const intervals = this.calculateChordIntervals(tab, degreeRootNoteIndex, stringSet);
+
+                    return {
+                        degree: chordData.degree,
+                        name: newName,
+                        notes: newNotes,
+                        tab: tab,
+                        intervals: intervals
+                    };
+                }).filter(c => c !== null);
+            },
+
             playHarmonizationSequence: async function() {
                 const selectedSet = document.getElementById('harmonizationStringSet').value;
-                const chordsData = this.MAJOR_SCALE_HARMONIZATION;
+                const selectedKey = document.getElementById('harmonizationKeySelect').value;
+                const transposedChords = this.getTransposedHarmonization(selectedKey, selectedSet);
                 const cards = document.querySelectorAll('#harmonizationGrid .chord-card');
 
-                for (let i = 0; i < chordsData.length; i++) {
-                    const chordData = chordsData[i];
+                for (let i = 0; i < transposedChords.length; i++) {
+                    const chordObject = transposedChords[i];
                     const card = cards[i];
-                    const tab = chordData.tabs[selectedSet];
-
-                    if (!tab) continue; // Salta se non ci sono voicing per questo set
 
                     if (card) {
                         card.style.transform = "translateY(-5px)";
                         card.style.boxShadow = "0 0 15px #00BCD4";
                     }
-
-                    const rootNoteIndex = this.NOTES_FLAT.indexOf(chordData.name[0]);
-                    const intervals = this.calculateChordIntervals(tab, rootNoteIndex, selectedSet);
-
-                    const chordObject = {
-                        name: chordData.name,
-                        notes: chordData.notes,
-                        tab: tab,
-                        intervals: intervals
-                    };
 
                     this.showTab(chordObject, selectedSet);
                     this.playChord(chordObject, selectedSet);
