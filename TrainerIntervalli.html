@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Studio Chitarra - Trainer Intervalli & Armonia</title>
+    <style>
+        :root {
+            --bg-color: #121214;
+            --card-bg: #1e1e24;
+            --accent-color: #ff9f1c;
+            --text-color: #e0e0e0;
+            --correct-color: #2ec4b6;
+            --wrong-color: #e71d36;
+            --fretboard-wood: #2b1e1a;
+            --fret-wire: #8d99ae;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: var(--accent-color);
+            margin-bottom: 5px;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+
+        p.subtitle {
+            margin-top: 0;
+            color: #a0a0a0;
+            font-size: 0.9rem;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            border: 1px solid #2a2a35;
+        }
+
+        /* TAB NAVIGATION */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background-color: var(--card-bg);
+            border: 1px solid #2a2a35;
+            color: var(--text-color);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .tab-btn.active {
+            background-color: var(--accent-color);
+            color: #000;
+            border-color: var(--accent-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* QUIZ STYLES & CONTROLS */
+        .mode-selector {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: #121214;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #2a2a35;
+            flex-wrap: wrap;
+        }
+
+        .mode-selector label {
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: var(--accent-color);
+        }
+
+        .mode-selector select {
+            padding: 6px 12px;
+            background: #2a2a35;
+            color: #fff;
+            border: 1px solid #444;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .quiz-question {
+            font-size: 1.4rem;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .quiz-question span.highlight {
+            color: var(--accent-color);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .option-btn {
+            padding: 12px;
+            background-color: #2a2a35;
+            border: 1px solid #3a3a45;
+            color: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        .option-btn:hover {
+            background-color: #3a3a45;
+        }
+
+        .feedback {
+            min-height: 50px;
+            text-align: center;
+            font-weight: bold;
+            border-radius: 6px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .feedback.correct {
+            background-color: rgba(46, 196, 182, 0.2);
+            color: var(--correct-color);
+            border: 1px solid var(--correct-color);
+        }
+
+        .feedback.wrong {
+            background-color: rgba(231, 29, 54, 0.2);
+            color: var(--wrong-color);
+            border: 1px solid var(--wrong-color);
+        }
+
+        .next-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--accent-color);
+            border: none;
+            color: #000;
+            font-weight: bold;
+            font-size: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        /* SCORE BOARD */
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: #a0a0a0;
+        }
+
+        .score-board span {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        /* FRETBOARD STYLES */
+        .fretboard-container {
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+
+        .fretboard {
+            display: flex;
+            flex-direction: column;
+            background-color: var(--fretboard-wood);
+            border-radius: 4px;
+            padding: 10px 0;
+            min-width: 650px;
+            position: relative;
+            border-left: 8px solid #d4a373;
+        }
+
+        .string {
+            display: flex;
+            height: 30px;
+            align-items: center;
+            position: relative;
+        }
+
+        .string::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            background-color: var(--fret-wire);
+            z-index: 1;
+        }
+
+        .string:nth-child(1)::before { height: 1px; }
+        .string:nth-child(2)::before { height: 1.5px; }
+        .string:nth-child(3)::before { height: 2px; }
+        .string:nth-child(4)::before { height: 2.5px; }
+        .string:nth-child(5)::before { height: 3px; }
+        .string:nth-child(6)::before { height: 3.5px; }
+
+        .fret {
+            flex: 1;
+            height: 100%;
+            border-right: 2px solid var(--fret-wire);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2;
+            position: relative;
+        }
+
+        .note-marker {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background-color: #333;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            transition: transform 0.1s;
+        }
+
+        .note-marker:hover {
+            transform: scale(1.15);
+        }
+
+        .note-marker.root {
+            background-color: var(--wrong-color);
+            color: #fff;
+        }
+
+        .note-marker.target {
+            background-color: var(--correct-color);
+            color: #000;
+        }
+
+        .note-marker.hidden-note {
+            background-color: #2a2a35;
+            color: transparent;
+            border: 1px dashed #555;
+        }
+
+        .fret-number {
+            display: flex;
+            min-width: 650px;
+            margin-top: 5px;
+        }
+
+        .fret-number span {
+            flex: 1;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #777;
+        }
+
+        pre.ascii-diagram {
+            background-color: #121214;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', Courier, monospace;
+            color: var(--accent-color);
+            overflow-x: auto;
+            font-size: 0.85rem;
+            line-height: 1.2;
+        }
+
+        .formula-box {
+            background: #121214;
+            border-left: 4px solid var(--accent-color);
+            padding: 10px 15px;
+            margin: 10px 0;
+            font-size: 1.05rem;
+        }
+    </style>
+</head>
+<body>
+    <div style="width: 100%; max-width: 800px; display: flex; justify-content: flex-start; margin-bottom: 10px;">
+        <a href="index.html" style="color: #a0a0a0; text-decoration: none; font-size: 0.9rem; transition: color 0.2s;" onmouseover="this.style.color='#ff9f1c'" onmouseout="this.style.color='#a0a0a0'">
+            &larr; Torna al menu
+        </a>
+    </div>
+
+    <h1>Studio Chitarra</h1>
+    <p class="subtitle">Trainer Intervalli, Tastiera & Armonia Jazz/Blues</p>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('quiz')">🧮 Quiz Intervalli</button>
+        <button class="tab-btn" onclick="switchTab('fretboard')">🎸 Visualizzatore Tastiera</button>
+        <button class="tab-btn" onclick="switchTab('theory')">📚 Regola del 9 & Shell</button>
+    </div>
+
+    <div class="container">
+
+        <!-- TAB 1: QUIZ INTERVALLI -->
+        <div id="tab-quiz" class="tab-content active">
+            <div class="card">
+                <div class="mode-selector">
+                    <label for="scale-mode">Tipo di Scala:</label>
+                    <select id="scale-mode" onchange="resetQuizAndGenerate()">
+                        <option value="chromatic">Cromatica (Tutte le 12 note)</option>
+                        <option value="diatonic">Diatonica (Scala di DO / Note naturali)</option>
+                    </select>
+                </div>
+
+                <div class="score-board">
+                    <div>Punteggio: <span id="score">0</span></div>
+                    <div>Totale: <span id="total">0</span></div>
+                    <div>Accuratezza: <span id="accuracy">0%</span></div>
+                </div>
+
+                <div class="quiz-question" id="question">
+                    Caricamento domanda...
+                </div>
+
+                <div class="options-grid" id="options"></div>
+
+                <div class="feedback" id="feedback" style="display: none;"></div>
+
+                <button class="next-btn" id="next-btn" onclick="generateQuestion()" style="display: none;">Prossima Domanda ➔</button>
+            </div>
+        </div>
+
+        <!-- TAB 2: VISUALIZZATORE TASTIERA -->
+        <div id="tab-fretboard" class="tab-content">
+            <div class="card">
+                <h3>Esplora la Geometria degli Intervalli</h3>
+                <p style="font-size: 0.85rem; color: #aaa;">Scegli la corda su cui posizionare la Radice e la posizione del tasto:</p>
+                
+                <div class="mode-selector">
+                    <label for="string-select">Corda della Radice:</label>
+                    <select id="string-select" onchange="updateFretboardOptions()">
+                        <option value="5">6ª Corda (MI Basso)</option>
+                        <option value="4" selected>5ª Corda (LA)</option>
+                        <option value="3">4ª Corda (RE)</option>
+                    </select>
+
+                    <label for="root-select">Nota / Tasto Radice:</label>
+                    <select id="root-select" onchange="updateFretboardView()"></select>
+                </div>
+
+                <div class="fretboard-container">
+                    <div class="fretboard" id="interactive-fretboard"></div>
+                    <div class="fret-number" id="fret-numbers"></div>
+                </div>
+
+                <div id="fretboard-legend" style="margin-top: 15px; font-size: 0.85rem; color: #ccc;">
+                    <span style="color: var(--wrong-color); font-weight: bold;">■</span> Radice (R) | 
+                    <span style="color: var(--correct-color); font-weight: bold;">■</span> Intervalli Correlati (3ªM, 3ªm, 4ª, 5ª, b7, 7M)
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: TEORIA RAPIDA -->
+        <div id="tab-theory" class="tab-content">
+            <div class="card">
+                <h3>La Regola del 9 (Intervalli Discendenti)</h3>
+                
+                <div class="formula-box">
+                    <b>9 - (Intervallo Ascendente) = Intervallo Discendente</b>
+                </div>
+
+                <p>Inverte istantaneamente qualsiasi intervallo calcolato all'indietro:</p>
+                <ul>
+                    <li><b>Maggiore</b> diventa <b>Minore</b> (e viceversa)</li>
+                    <li><b>Giusto</b> rimane <b>Giusto</b></li>
+                    <li><b>Aumentato</b> diventa <b>Diminuito</b> (e viceversa)</li>
+                </ul>
+
+                <h3>Mappa Geometrica Reale (Radice su 5ª Corda)</h3>
+                <pre class="ascii-diagram">
+Corda   | Tasto -2    | Tasto -1    | STESSO TASTO | Tasto +1    | Tasto +2
+-------------------------------------------------------------------------
+3ª (SOL)|             |             | 7ª Min (b7)  | 7ª Mag (7M) | 1ª (Ottava)
+4ª (RE) | 3ª Min (b3) | 3ª Mag (3M) | 4ª Giusta(4) | Tritono(b5) | 5ª Giusta(5)
+5ª (LA) |             |             | [ R ]        |             | 2ª Mag (9)
+                </pre>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const CHROMATIC_NOTES = ['DO', 'DO#', 'RE', 'RE#', 'MI', 'FA', 'FA#', 'SOL', 'SOL#', 'LA', 'LA#', 'SI'];
+        const DIATONIC_NOTES = ['DO', 'RE', 'MI', 'FA', 'SOL', 'LA', 'SI'];
+
+        const INTERVALS = [
+            { name: 'Prima Unisono', semitones: 0, short: '1' },
+            { name: '2ª Minore', semitones: 1, short: 'b2' },
+            { name: '2ª Maggiore', semitones: 2, short: '2' },
+            { name: '3ª Minore', semitones: 3, short: 'b3' },
+            { name: '3ª Maggiore', semitones: 4, short: '3M' },
+            { name: '4ª Giusta', semitones: 5, short: '4' },
+            { name: 'Tritono / 5ª Dim', semitones: 6, short: 'b5' },
+            { name: '5ª Giusta', semitones: 7, short: '5' },
+            { name: '6ª Minore', semitones: 8, short: 'b6' },
+            { name: '6ª Maggiore', semitones: 9, short: '6' },
+            { name: '7ª Minore', semitones: 10, short: 'b7' },
+            { name: '7ª Maggiore', semitones: 11, short: '7M' },
+            { name: 'Ottava', semitones: 12, short: '8' }
+        ];
+
+        const STRING_TUNINGS = [4, 11, 7, 2, 9, 4]; // E4, B3, G3, D3, A2, E2
+
+        let currentQuestion = {};
+        let score = 0;
+        let total = 0;
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
+
+            if(tabId === 'fretboard') {
+                updateFretboardOptions();
+            }
+        }
+
+        function resetQuizAndGenerate() {
+            score = 0;
+            total = 0;
+            document.getElementById('score').innerText = '0';
+            document.getElementById('total').innerText = '0';
+            document.getElementById('accuracy').innerText = '0%';
+            generateQuestion();
+        }
+
+        function generateQuestion() {
+            document.getElementById('feedback').style.display = 'none';
+            document.getElementById('next-btn').style.display = 'none';
+
+            const mode = document.getElementById('scale-mode').value;
+            const isDiatonic = (mode === 'diatonic');
+
+            let note1, note2, semitones;
+            const isAscending = Math.random() > 0.3;
+
+            if (isDiatonic) {
+                const idx1 = Math.floor(Math.random() * DIATONIC_NOTES.length);
+                let idx2 = Math.floor(Math.random() * DIATONIC_NOTES.length);
+                while (idx1 === idx2) {
+                    idx2 = Math.floor(Math.random() * DIATONIC_NOTES.length);
+                }
+
+                note1 = DIATONIC_NOTES[idx1];
+                note2 = DIATONIC_NOTES[idx2];
+
+                const chromIdx1 = CHROMATIC_NOTES.indexOf(note1);
+                const chromIdx2 = CHROMATIC_NOTES.indexOf(note2);
+
+                if (isAscending) {
+                    semitones = (chromIdx2 - chromIdx1 + 12) % 12;
+                } else {
+                    semitones = (chromIdx1 - chromIdx2 + 12) % 12;
+                }
+            } else {
+                const rootIndex = Math.floor(Math.random() * CHROMATIC_NOTES.length);
+                const intervalObj = INTERVALS[Math.floor(Math.random() * (INTERVALS.length - 1)) + 1];
+                semitones = intervalObj.semitones;
+
+                let targetIndex;
+                if (isAscending) {
+                    targetIndex = (rootIndex + semitones) % 12;
+                } else {
+                    targetIndex = (rootIndex - semitones + 12) % 12;
+                }
+
+                note1 = CHROMATIC_NOTES[rootIndex];
+                note2 = CHROMATIC_NOTES[targetIndex];
+            }
+
+            const matchedInterval = INTERVALS.find(i => i.semitones === semitones) || INTERVALS[0];
+
+            currentQuestion = {
+                note1: note1,
+                note2: note2,
+                direction: isAscending ? 'Ascendente' : 'Discendente',
+                correctAnswer: matchedInterval.name,
+                semitones: semitones,
+                isAscending: isAscending
+            };
+
+            document.getElementById('question').innerHTML = 
+                `Da <span class="highlight">${note1}</span> a <span class="highlight">${note2}</span> (${currentQuestion.direction})`;
+
+            let options = [matchedInterval.name];
+            while (options.length < 4) {
+                let randomInt = INTERVALS[Math.floor(Math.random() * INTERVALS.length)].name;
+                if (!options.includes(randomInt)) {
+                    options.push(randomInt);
+                }
+            }
+            options.sort(() => Math.random() - 0.5);
+
+            const optionsContainer = document.getElementById('options');
+            optionsContainer.innerHTML = '';
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(opt);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selectedOption) {
+            const feedbackEl = document.getElementById('feedback');
+            total++;
+
+            const isCorrect = selectedOption === currentQuestion.correctAnswer;
+
+            if (isCorrect) {
+                score++;
+                feedbackEl.className = 'feedback correct';
+                feedbackEl.innerHTML = `<div>¡Esatto! 🎉</div>`;
+            } else {
+                feedbackEl.className = 'feedback wrong';
+                let explanation = `Risposta corretta: <b>${currentQuestion.correctAnswer}</b>`;
+                if (!currentQuestion.isAscending) {
+                    const invVal = 9 - getIntervalNumber(currentQuestion.correctAnswer);
+                    explanation += `<br><small>💡 Regola del 9: Scendere di una ${currentQuestion.correctAnswer} = Salire di una ${invVal}ª</small>`;
+                }
+                feedbackEl.innerHTML = explanation;
+            }
+
+            document.querySelectorAll('.option-btn').forEach(btn => btn.disabled = true);
+
+            document.getElementById('score').innerText = score;
+            document.getElementById('total').innerText = total;
+            document.getElementById('accuracy').innerText = Math.round((score / total) * 100) + '%';
+
+            feedbackEl.style.display = 'flex';
+            document.getElementById('next-btn').style.display = 'block';
+        }
+
+        function getIntervalNumber(name) {
+            if (name.includes('2ª')) return 2;
+            if (name.includes('3ª')) return 3;
+            if (name.includes('4ª')) return 4;
+            if (name.includes('5ª')) return 5;
+            if (name.includes('6ª')) return 6;
+            if (name.includes('7ª')) return 7;
+            return 0;
+        }
+
+        function updateFretboardOptions() {
+            const stringIdx = parseInt(document.getElementById('string-select').value);
+            const rootSelect = document.getElementById('root-select');
+            rootSelect.innerHTML = '';
+
+            const presets = [
+                { fret: 3, name: 'Tasto 3' },
+                { fret: 5, name: 'Tasto 5' },
+                { fret: 7, name: 'Tasto 7' },
+                { fret: 8, name: 'Tasto 8' },
+                { fret: 10, name: 'Tasto 10' }
+            ];
+
+            presets.forEach(p => {
+                const noteName = CHROMATIC_NOTES[(STRING_TUNINGS[stringIdx] + p.fret) % 12];
+                const opt = document.createElement('option');
+                opt.value = p.fret;
+                opt.innerText = `${noteName} (${p.name})`;
+                rootSelect.appendChild(opt);
+            });
+
+            renderFretboard();
+        }
+
+        function renderFretboard() {
+            const fretboard = document.getElementById('interactive-fretboard');
+            const fretNumbers = document.getElementById('fret-numbers');
+            fretboard.innerHTML = '';
+            fretNumbers.innerHTML = '';
+
+            const rootStringIdx = parseInt(document.getElementById('string-select').value);
+            const rootFret = parseInt(document.getElementById('root-select').value) || 3;
+
+            for(let f=0; f<=12; f++) {
+                const numSpan = document.createElement('span');
+                numSpan.innerText = f;
+                fretNumbers.appendChild(numSpan);
+            }
+
+            for (let s = 0; s < 6; s++) {
+                const stringEl = document.createElement('div');
+                stringEl.className = 'string';
+
+                for (let f = 0; f <= 12; f++) {
+                    const fretEl = document.createElement('div');
+                    fretEl.className = 'fret';
+
+                    const noteIndex = (STRING_TUNINGS[s] + f) % 12;
+                    const marker = document.createElement('div');
+
+                    if (s === rootStringIdx && f === rootFret) {
+                        marker.className = 'note-marker root';
+                        marker.innerText = 'R';
+                    } else {
+                        const rootNoteIndex = (STRING_TUNINGS[rootStringIdx] + rootFret) % 12;
+                        const semitoneDiff = (noteIndex - rootNoteIndex + 12) % 12;
+
+                        const targetIntervals = { 3: 'b3', 4: '3M', 5: '4', 6: 'b5', 7: '5', 10: 'b7', 11: '7M' };
+
+                        if (targetIntervals[semitoneDiff] && Math.abs(f - rootFret) <= 3 && Math.abs(s - rootStringIdx) <= 2) {
+                            marker.className = 'note-marker target';
+                            marker.innerText = targetIntervals[semitoneDiff];
+                        } else {
+                            marker.className = 'note-marker hidden-note';
+                            marker.innerText = CHROMATIC_NOTES[noteIndex];
+                        }
+                    }
+
+                    fretEl.appendChild(marker);
+                    stringEl.appendChild(fretEl);
+                }
+                fretboard.appendChild(stringEl);
+            }
+        }
+
+        function updateFretboardView() {
+            renderFretboard();
+        }
+
+        generateQuestion();
+    </script>
+</body>
+</html>
