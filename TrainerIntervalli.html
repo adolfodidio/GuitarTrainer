@@ -2,252 +2,120 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Studio Chitarra - Trainer Intervalli & Armonia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Trainer Intervalli & Armonia - Guitar Trainer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #121214;
-            --card-bg: #1e1e24;
-            --accent-color: #ff9f1c;
-            --text-color: #e0e0e0;
-            --correct-color: #2ec4b6;
-            --wrong-color: #e71d36;
-            --fretboard-wood: #2b1e1a;
-            --fret-wire: #8d99ae;
+            --bg-main: #0a0e17;
+            --card-bg: #131b2e;
+            --accent: #f59e0b;
+            --correct: #10b981;
+            --wrong: #f43f5e;
+            --fretboard-wood: #1e140f;
+            --fret-wire: #64748b;
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
             margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            padding: 0;
         }
 
-        h1 {
-            color: var(--accent-color);
-            margin-bottom: 5px;
-            font-size: 1.8rem;
-            text-align: center;
+        html, body {
+            height: 100%;
+            height: 100dvh;
+            max-height: 100dvh;
+            overflow: hidden;
+            background-color: var(--bg-main);
+            color: #f1f5f9;
+            font-family: 'Inter', sans-serif;
+            overscroll-behavior: none;
         }
 
-        p.subtitle {
-            margin-top: 0;
-            color: #a0a0a0;
-            font-size: 0.9rem;
-            text-align: center;
-            margin-bottom: 25px;
-        }
-
-        .container {
+        /* STRICT TAB DISPLAY RULES (Prevents any overlap) */
+        .tab-pane {
+            display: none !important;
+            height: 100%;
             width: 100%;
-            max-width: 800px;
-            display: flex;
             flex-direction: column;
-            gap: 20px;
         }
-
-        .card {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            border: 1px solid #2a2a35;
-        }
-
-        /* TAB NAVIGATION */
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-            width: 100%;
-            max-width: 800px;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 12px;
-            background-color: var(--card-bg);
-            border: 1px solid #2a2a35;
-            color: var(--text-color);
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.2s;
-            text-align: center;
+        .tab-pane.active {
+            display: flex !important;
         }
 
         .tab-btn.active {
-            background-color: var(--accent-color);
-            color: #000;
-            border-color: var(--accent-color);
+            background-color: #f59e0b;
+            color: #090d16;
+            font-weight: 800;
+            box-shadow: 0 2px 10px rgba(245, 158, 11, 0.4);
         }
 
-        .tab-content {
-            display: none;
+        /* Option buttons styling */
+        .quiz-opt-btn {
+            transition: transform 0.1s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+            touch-action: manipulation;
+        }
+        .quiz-opt-btn:active:not(:disabled) {
+            transform: scale(0.96);
+        }
+        .quiz-opt-btn.correct {
+            background: linear-gradient(135deg, #065f46 0%, #047857 100%) !important;
+            border-color: #34d399 !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.5) !important;
+        }
+        .quiz-opt-btn.wrong {
+            background: linear-gradient(135deg, #881337 0%, #be123c 100%) !important;
+            border-color: #fb7185 !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 15px rgba(244, 63, 94, 0.5) !important;
         }
 
-        .tab-content.active {
-            display: block;
-        }
-
-        /* QUIZ STYLES & CONTROLS */
-        .mode-selector {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-            background: #121214;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #2a2a35;
-            flex-wrap: wrap;
-        }
-
-        .mode-selector label {
-            font-weight: bold;
-            font-size: 0.9rem;
-            color: var(--accent-color);
-        }
-
-        .mode-selector select {
-            padding: 6px 12px;
-            background: #2a2a35;
-            color: #fff;
-            border: 1px solid #444;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            cursor: pointer;
-        }
-
-        .quiz-question {
-            font-size: 1.4rem;
-            text-align: center;
-            margin-bottom: 20px;
-            font-weight: 600;
-        }
-
-        .quiz-question span.highlight {
-            color: var(--accent-color);
-        }
-
-        .options-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .option-btn {
-            padding: 12px;
-            background-color: #2a2a35;
-            border: 1px solid #3a3a45;
-            color: #fff;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: background 0.2s;
-        }
-
-        .option-btn:hover {
-            background-color: #3a3a45;
-        }
-
-        .feedback {
-            min-height: 50px;
-            text-align: center;
-            font-weight: bold;
-            border-radius: 6px;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .feedback.correct {
-            background-color: rgba(46, 196, 182, 0.2);
-            color: var(--correct-color);
-            border: 1px solid var(--correct-color);
-        }
-
-        .feedback.wrong {
-            background-color: rgba(231, 29, 54, 0.2);
-            color: var(--wrong-color);
-            border: 1px solid var(--wrong-color);
-        }
-
-        .next-btn {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--accent-color);
-            border: none;
-            color: #000;
-            font-weight: bold;
-            font-size: 1rem;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-top: 15px;
-        }
-
-        /* SCORE BOARD */
-        .score-board {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 15px;
-            font-size: 0.9rem;
-            color: #a0a0a0;
-        }
-
-        .score-board span {
-            color: var(--accent-color);
-            font-weight: bold;
-        }
-
-        /* FRETBOARD STYLES */
-        .fretboard-container {
+        /* Fretboard styles */
+        .fretboard-wrap {
             overflow-x: auto;
-            padding-bottom: 10px;
+            -webkit-overflow-scrolling: touch;
         }
-
         .fretboard {
             display: flex;
             flex-direction: column;
-            background-color: var(--fretboard-wood);
-            border-radius: 4px;
-            padding: 10px 0;
-            min-width: 650px;
+            background: linear-gradient(180deg, #231712 0%, #170f0b 100%);
+            border-radius: 8px;
+            padding: 8px 0;
+            min-width: 640px;
             position: relative;
-            border-left: 8px solid #d4a373;
+            border-left: 8px solid #d97706;
+            border-right: 2px solid #334155;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.8), 0 4px 12px rgba(0,0,0,0.5);
         }
 
-        .string {
+        .g-string {
             display: flex;
-            height: 30px;
+            height: 28px;
             align-items: center;
             position: relative;
         }
 
-        .string::before {
+        .g-string::before {
             content: '';
             position: absolute;
             width: 100%;
             background-color: var(--fret-wire);
             z-index: 1;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.6);
         }
 
-        .string:nth-child(1)::before { height: 1px; }
-        .string:nth-child(2)::before { height: 1.5px; }
-        .string:nth-child(3)::before { height: 2px; }
-        .string:nth-child(4)::before { height: 2.5px; }
-        .string:nth-child(5)::before { height: 3px; }
-        .string:nth-child(6)::before { height: 3.5px; }
+        .g-string:nth-child(1)::before { height: 1px; }
+        .g-string:nth-child(2)::before { height: 1.5px; }
+        .g-string:nth-child(3)::before { height: 2px; }
+        .g-string:nth-child(4)::before { height: 2.5px; }
+        .g-string:nth-child(5)::before { height: 3px; }
+        .g-string:nth-child(6)::before { height: 3.5px; }
 
-        .fret {
+        .g-fret {
             flex: 1;
             height: 100%;
             border-right: 2px solid var(--fret-wire);
@@ -256,183 +124,358 @@
             align-items: center;
             z-index: 2;
             position: relative;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
         }
 
-        .note-marker {
-            width: 22px;
-            height: 22px;
+        .g-fret:hover {
+            background-color: rgba(245, 158, 11, 0.15);
+        }
+
+        .g-fret:active {
+            background-color: rgba(245, 158, 11, 0.3);
+        }
+
+        /* Capotasto / Tasto 0 (Corde a vuoto) - Evidenziato con sfondo chiaro e barra solida */
+        .g-fret.fret-zero {
+            background: linear-gradient(90deg, #334155 0%, #1e293b 100%);
+            border-right: 5px solid #f1f5f9;
+            box-shadow: 2px 0 6px rgba(0,0,0,0.6);
+        }
+
+        .g-fret.fret-zero:hover {
+            background: linear-gradient(90deg, rgba(245, 158, 11, 0.25) 0%, rgba(245, 158, 11, 0.35) 100%);
+        }
+
+        .g-fret.fret-zero:active {
+            background: linear-gradient(90deg, rgba(245, 158, 11, 0.4) 0%, rgba(245, 158, 11, 0.5) 100%);
+        }
+
+        .fret-marker {
+            width: 23px;
+            height: 23px;
             border-radius: 50%;
-            background-color: #333;
-            color: #fff;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 0.75rem;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
-            transition: transform 0.1s;
+            font-size: 0.72rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.8);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
         }
 
-        .note-marker:hover {
+        .fret-marker.root {
+            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+            color: #ffffff;
+            transform: scale(1.22);
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.95);
+            border: 2px solid #fca5a5;
+            z-index: 10;
+            animation: pulse-root 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-root {
+            0%, 100% { box-shadow: 0 0 8px rgba(239, 68, 68, 0.7); }
+            50% { box-shadow: 0 0 16px rgba(239, 68, 68, 1); }
+        }
+
+        .fret-marker.interval-triad {
+            background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+            color: #ffffff;
+            transform: scale(1.12);
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.75);
+            border: 1.5px solid #6ee7b7;
+            z-index: 5;
+        }
+
+        .fret-marker.interval-seventh {
+            background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);
+            color: #ffffff;
+            transform: scale(1.08);
+            box-shadow: 0 0 8px rgba(168, 85, 247, 0.7);
+            border: 1.5px solid #d8b4fe;
+            z-index: 4;
+        }
+
+        .fret-marker.interval-other {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            color: #ffffff;
+            transform: scale(1.02);
+            box-shadow: 0 0 6px rgba(2, 132, 199, 0.6);
+            border: 1px solid #7dd3fc;
+            z-index: 3;
+        }
+
+        .fret-marker.hidden-note {
+            background-color: rgba(30, 41, 59, 0.85);
+            color: #cbd5e1;
+            font-size: 0.65rem;
+            font-weight: 700;
+            opacity: 0.72;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+        }
+
+        .g-fret:hover .fret-marker.hidden-note {
+            opacity: 1;
+            color: #ffffff;
+            border-color: #f59e0b;
+            background-color: #334155;
             transform: scale(1.15);
         }
 
-        .note-marker.root {
-            background-color: var(--wrong-color);
-            color: #fff;
-        }
-
-        .note-marker.target {
-            background-color: var(--correct-color);
-            color: #000;
-        }
-
-        .note-marker.hidden-note {
-            background-color: #2a2a35;
-            color: transparent;
-            border: 1px dashed #555;
-        }
-
-        .fret-number {
+        .fret-num-row {
             display: flex;
-            min-width: 650px;
-            margin-top: 5px;
+            min-width: 640px;
+            margin-top: 6px;
         }
 
-        .fret-number span {
+        .fret-num-row span {
             flex: 1;
             text-align: center;
-            font-size: 0.75rem;
-            color: #777;
+            font-size: 0.7rem;
+            color: #64748b;
+            font-family: 'JetBrains Mono', monospace;
         }
 
-        pre.ascii-diagram {
-            background-color: #121214;
-            padding: 15px;
-            border-radius: 6px;
-            font-family: 'Courier New', Courier, monospace;
-            color: var(--accent-color);
-            overflow-x: auto;
-            font-size: 0.85rem;
-            line-height: 1.2;
+        /* Custom Scrollbar for scrollable sub-containers */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
         }
-
-        .formula-box {
-            background: #121214;
-            border-left: 4px solid var(--accent-color);
-            padding: 10px 15px;
-            margin: 10px 0;
-            font-size: 1.05rem;
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
         }
     </style>
 </head>
-<body>
-    <div style="width: 100%; max-width: 800px; display: flex; justify-content: flex-start; margin-bottom: 10px;">
-        <a href="index.html" style="color: #a0a0a0; text-decoration: none; font-size: 0.9rem; transition: color 0.2s;" onmouseover="this.style.color='#ff9f1c'" onmouseout="this.style.color='#a0a0a0'">
-            &larr; Torna al menu
+<body class="flex flex-col p-2 sm:p-4 max-w-lg mx-auto w-full justify-between select-none">
+
+    <!-- 1. COMPACT TOP BAR -->
+    <header class="flex items-center justify-between gap-2 flex-shrink-0 h-9 mb-1.5">
+        <a href="index.html" class="flex items-center gap-1 text-xs font-bold text-slate-300 hover:text-amber-400 py-1.5 px-3 rounded-lg bg-slate-800/90 border border-slate-700/80 active:scale-95 transition-all shadow-sm">
+            <span>&larr;</span> Menu
         </a>
-    </div>
+        <h1 class="text-sm sm:text-base font-extrabold text-amber-400 tracking-tight flex items-center gap-1.5">
+            <span>🎸</span> Trainer Intervalli
+        </h1>
+        <div class="text-[10px] font-mono font-bold px-2 py-1 rounded bg-slate-800/80 text-amber-400/90 border border-slate-700/50">
+            JAZZ LAB
+        </div>
+    </header>
 
-    <h1>Studio Chitarra</h1>
-    <p class="subtitle">Trainer Intervalli, Tastiera & Armonia Jazz/Blues</p>
+    <!-- 2. SEGMENTED TAB NAVIGATION -->
+    <nav class="grid grid-cols-3 p-1 bg-slate-900/95 rounded-xl border border-slate-800 flex-shrink-0 gap-1 mb-2 shadow-inner">
+        <button id="btn-quiz" class="tab-btn active py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-center flex items-center justify-center gap-1" onclick="selectTab('quiz')">
+            <span>🧮</span> Quiz
+        </button>
+        <button id="btn-fretboard" class="tab-btn py-1.5 px-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all text-center flex items-center justify-center gap-1" onclick="selectTab('fretboard')">
+            <span>🎸</span> Tastiera
+        </button>
+        <button id="btn-theory" class="tab-btn py-1.5 px-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all text-center flex items-center justify-center gap-1" onclick="selectTab('theory')">
+            <span>📚</span> Teoria
+        </button>
+    </nav>
 
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('quiz')">🧮 Quiz Intervalli</button>
-        <button class="tab-btn" onclick="switchTab('fretboard')">🎸 Visualizzatore Tastiera</button>
-        <button class="tab-btn" onclick="switchTab('theory')">📚 Regola del 9 & Shell</button>
-    </div>
+    <!-- 3. MAIN APP VIEWPORT CONTAINER (FIXED HEIGHT, STRICT ISOLATION) -->
+    <main class="flex-1 min-h-0 relative flex flex-col overflow-hidden">
 
-    <div class="container">
-
-        <!-- TAB 1: QUIZ INTERVALLI -->
-        <div id="tab-quiz" class="tab-content active">
-            <div class="card">
-                <div class="mode-selector">
-                    <label for="scale-mode">Tipo di Scala:</label>
-                    <select id="scale-mode" onchange="resetQuizAndGenerate()">
-                        <option value="chromatic">Cromatica (Tutte le 12 note)</option>
-                        <option value="diatonic">Diatonica (Scala di DO / Note naturali)</option>
+        <!-- ==================== TAB 1: QUIZ INTERVALLI ==================== -->
+        <section id="pane-quiz" class="tab-pane active flex-1 flex flex-col justify-between overflow-hidden gap-2">
+            
+            <!-- Controls & Live Score Bar -->
+            <div class="bg-slate-800/90 border border-slate-700/70 p-2 rounded-xl flex items-center justify-between gap-2 flex-shrink-0 shadow-sm">
+                <div class="flex items-center gap-1">
+                    <select id="scale-mode" onchange="resetQuiz()" class="bg-slate-900 border border-slate-600/80 rounded-lg px-2 py-1 text-xs font-medium text-white outline-none cursor-pointer focus:border-amber-400">
+                        <option value="chromatic">Cromatica (12 note)</option>
+                        <option value="diatonic">Diatonica (DO Magg.)</option>
                     </select>
                 </div>
 
-                <div class="score-board">
-                    <div>Punteggio: <span id="score">0</span></div>
-                    <div>Totale: <span id="total">0</span></div>
-                    <div>Accuratezza: <span id="accuracy">0%</span></div>
+                <div class="flex items-center gap-1.5 text-xs font-mono">
+                    <div class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700/80 text-emerald-400 font-bold flex items-center gap-1" title="Corrette / Totale">
+                        <span class="text-[10px] text-slate-400 font-normal">P:</span>
+                        <span id="score-val">0</span>/<span id="total-val" class="text-slate-400 font-normal">0</span>
+                    </div>
+                    <div class="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold" title="Accuratezza">
+                        <span id="acc-val">100%</span>
+                    </div>
                 </div>
-
-                <div class="quiz-question" id="question">
-                    Caricamento domanda...
-                </div>
-
-                <div class="options-grid" id="options"></div>
-
-                <div class="feedback" id="feedback" style="display: none;"></div>
-
-                <button class="next-btn" id="next-btn" onclick="generateQuestion()" style="display: none;">Prossima Domanda ➔</button>
             </div>
-        </div>
 
-        <!-- TAB 2: VISUALIZZATORE TASTIERA -->
-        <div id="tab-fretboard" class="tab-content">
-            <div class="card">
-                <h3>Esplora la Geometria degli Intervalli</h3>
-                <p style="font-size: 0.85rem; color: #aaa;">Scegli la corda su cui posizionare la Radice e la posizione del tasto:</p>
+            <!-- Question Hero Card (Bilanciamento Armonico) -->
+            <div class="bg-slate-800/95 border border-slate-700/80 p-3 sm:p-4 rounded-2xl text-center shadow-lg flex-1 flex flex-col justify-center items-center min-h-0 relative">
                 
-                <div class="mode-selector">
-                    <label for="string-select">Corda della Radice:</label>
-                    <select id="string-select" onchange="updateFretboardOptions()">
-                        <option value="5">6ª Corda (MI Basso)</option>
-                        <option value="4" selected>5ª Corda (LA)</option>
-                        <option value="3">4ª Corda (RE)</option>
-                    </select>
-
-                    <label for="root-select">Nota / Tasto Radice:</label>
-                    <select id="root-select" onchange="updateFretboardView()"></select>
+                <!-- Direction Pill Badge -->
+                <div id="dir-badge" class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 mb-1.5">
+                    <span id="dir-icon">↗</span>
+                    <span id="dir-text">Ascendente</span>
                 </div>
-
-                <div class="fretboard-container">
-                    <div class="fretboard" id="interactive-fretboard"></div>
-                    <div class="fret-number" id="fret-numbers"></div>
-                </div>
-
-                <div id="fretboard-legend" style="margin-top: 15px; font-size: 0.85rem; color: #ccc;">
-                    <span style="color: var(--wrong-color); font-weight: bold;">■</span> Radice (R) | 
-                    <span style="color: var(--correct-color); font-weight: bold;">■</span> Intervalli Correlati (3ªM, 3ªm, 4ª, 5ª, b7, 7M)
-                </div>
-            </div>
-        </div>
-
-        <!-- TAB 3: TEORIA RAPIDA -->
-        <div id="tab-theory" class="tab-content">
-            <div class="card">
-                <h3>La Regola del 9 (Intervalli Discendenti)</h3>
                 
-                <div class="formula-box">
-                    <b>9 - (Intervallo Ascendente) = Intervallo Discendente</b>
+                <div class="text-xs font-medium text-slate-400 mb-1">Qual è l'intervallo da:</div>
+                
+                <!-- Notes Highlight Box -->
+                <div class="flex items-center justify-center gap-2.5 my-1">
+                    <div class="bg-slate-900/90 text-amber-400 border border-slate-700 px-3.5 py-1.5 rounded-xl text-2xl sm:text-3xl font-black tracking-wide shadow-inner min-w-[62px]" id="note-start">
+                        DO
+                    </div>
+                    <div class="text-slate-500 text-xl font-bold">➔</div>
+                    <div class="bg-slate-900/90 text-amber-400 border border-slate-700 px-3.5 py-1.5 rounded-xl text-2xl sm:text-3xl font-black tracking-wide shadow-inner min-w-[62px]" id="note-end">
+                        SOL
+                    </div>
                 </div>
 
-                <p>Inverte istantaneamente qualsiasi intervallo calcolato all'indietro:</p>
-                <ul>
-                    <li><b>Maggiore</b> diventa <b>Minore</b> (e viceversa)</li>
-                    <li><b>Giusto</b> rimane <b>Giusto</b></li>
-                    <li><b>Aumentato</b> diventa <b>Diminuito</b> (e viceversa)</li>
-                </ul>
-
-                <h3>Mappa Geometrica Reale (Radice su 5ª Corda)</h3>
-                <pre class="ascii-diagram">
-Corda   | Tasto -2    | Tasto -1    | STESSO TASTO | Tasto +1    | Tasto +2
--------------------------------------------------------------------------
-3ª (SOL)|             |             | 7ª Min (b7)  | 7ª Mag (7M) | 1ª (Ottava)
-4ª (RE) | 3ª Min (b3) | 3ª Mag (3M) | 4ª Giusta(4) | Tritono(b5) | 5ª Giusta(5)
-5ª (LA) |             |             | [ R ]        |             | 2ª Mag (9)
-                </pre>
+                <div class="text-[11px] text-slate-400 italic mt-1 font-medium" id="question-prompt">
+                    Tocca l'intervallo esatto tra le 6 opzioni
+                </div>
             </div>
-        </div>
 
-    </div>
+            <!-- 2x3 Option Buttons Grid (Touch-target HIG: 44-48px per riga) -->
+            <div class="grid grid-cols-2 gap-2 flex-shrink-0" id="options-container">
+                <!-- Injected via JavaScript -->
+            </div>
 
+            <!-- Feedback & Next Action Bar (Fixed Height) -->
+            <div class="h-12 sm:h-13 flex-shrink-0 flex items-center justify-center">
+                
+                <!-- Active Feedback Display -->
+                <div id="feedback-box" class="w-full h-full rounded-xl flex items-center justify-between px-3 border transition-all text-xs sm:text-sm font-semibold hidden">
+                    <div id="feedback-text" class="flex-1 text-left leading-snug"></div>
+                    <button id="btn-next-q" onclick="nextQuestion()" class="ml-2 px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-lg text-xs transition active:scale-95 shadow-md flex items-center gap-1 flex-shrink-0">
+                        Prossima ➔
+                    </button>
+                </div>
+
+                <!-- Idle Prompt -->
+                <div id="prompt-idle" class="text-[11px] text-slate-500 text-center font-medium">
+                    ⚡ Tocca un pulsante per verificare la distanza
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ==================== TAB 2: VISUALIZZATORE TASTIERA ==================== -->
+        <section id="pane-fretboard" class="tab-pane flex-1 flex flex-col justify-start overflow-y-auto sm:overflow-hidden gap-2">
+            
+            <!-- Fretboard Board Container (Agganciato in Alto & Stabile) -->
+            <div class="bg-slate-800/95 border border-slate-700/80 p-2 sm:p-3 rounded-2xl flex-shrink-0 shadow-lg">
+                <div class="text-[11px] text-slate-400 mb-1 flex justify-between items-center px-1">
+                    <span id="fretboard-root-info" class="font-bold text-slate-200">Radice [R]</span>
+                    <span class="text-[10px] text-amber-400 font-mono flex items-center gap-1">
+                        <span>💡</span> Tocca un tasto per impostare la radice
+                    </span>
+                </div>
+                
+                <div class="fretboard-wrap pb-1">
+                    <div class="fretboard" id="fretboard-canvas"></div>
+                    <div class="fret-num-row" id="fret-num-labels"></div>
+                </div>
+            </div>
+
+            <!-- Toggle Button for Legend -->
+            <div class="flex items-center justify-center flex-shrink-0">
+                <button id="btn-toggle-legend" onclick="toggleFretboardLegend()" class="text-xs font-bold px-3.5 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700/80 text-slate-300 hover:text-amber-400 flex items-center gap-1.5 transition-all active:scale-95 shadow-sm">
+                    <span id="legend-toggle-icon">📖</span>
+                    <span id="legend-toggle-text">Mostra Legenda Intervalli</span>
+                </button>
+            </div>
+
+            <!-- Collapsible Legend Bar (Default Hidden) -->
+            <div id="fretboard-legend" class="hidden bg-slate-900/95 border border-slate-700/80 p-2 sm:p-2.5 rounded-xl text-xs flex flex-col gap-1.5 flex-shrink-0 transition-all shadow-xl">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
+                    <div class="flex items-center gap-1.5 bg-slate-800/80 px-2 py-1 rounded-lg border border-slate-700/60">
+                        <span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block shadow-sm flex-shrink-0"></span>
+                        <span class="font-extrabold text-white font-mono">R</span>
+                        <span class="text-slate-500">:</span>
+                        <span class="text-slate-200 font-medium">Radice</span>
+                    </div>
+
+                    <div class="flex items-center gap-1.5 bg-slate-800/80 px-2 py-1 rounded-lg border border-slate-700/60">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block shadow-sm flex-shrink-0"></span>
+                        <span class="font-extrabold text-emerald-300 font-mono">3M / b3 / 5</span>
+                        <span class="text-slate-500">:</span>
+                        <span class="text-slate-200 font-medium">Triadi maggiori e minori</span>
+                    </div>
+
+                    <div class="flex items-center gap-1.5 bg-slate-800/80 px-2 py-1 rounded-lg border border-slate-700/60">
+                        <span class="w-2.5 h-2.5 rounded-full bg-purple-500 inline-block shadow-sm flex-shrink-0"></span>
+                        <span class="font-extrabold text-purple-300 font-mono">b7 / 7M</span>
+                        <span class="text-slate-500">:</span>
+                        <span class="text-slate-200 font-medium">Settime</span>
+                    </div>
+
+                    <div class="flex items-center gap-1.5 bg-slate-800/80 px-2 py-1 rounded-lg border border-slate-700/60">
+                        <span class="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block shadow-sm flex-shrink-0"></span>
+                        <span class="font-extrabold text-sky-300 font-mono">2M / 4 / 6 / b5</span>
+                        <span class="text-slate-500">:</span>
+                        <span class="text-slate-200 font-medium">Tensioni e altre estensioni</span>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ==================== TAB 3: TEORIA RAPIDA ==================== -->
+        <section id="pane-theory" class="tab-pane flex-1 overflow-y-auto pr-1">
+            <div class="space-y-2 pb-2">
+                
+                <!-- Card Regola del 9 -->
+                <div class="bg-slate-800/95 border border-slate-700/80 p-3 rounded-2xl shadow">
+                    <h2 class="text-xs font-extrabold text-amber-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                        <span>💡</span> La Regola del 9 (Intervalli Discendenti)
+                    </h2>
+                    
+                    <div class="bg-slate-900 border-l-4 border-amber-400 p-2 rounded-r-lg text-xs font-mono text-amber-300 font-bold mb-2">
+                        9 - (Intervallo Ascendente) = Intervallo Discendente
+                    </div>
+
+                    <p class="text-xs text-slate-300 leading-relaxed mb-2">
+                        Per invertire o calcolare mentalmente all'indietro:
+                    </p>
+                    
+                    <div class="grid grid-cols-3 gap-1.5 text-[11px] text-center font-medium">
+                        <div class="bg-slate-900/90 p-1.5 rounded-lg border border-slate-700/60">
+                            <span class="text-amber-400 font-bold block">Maggiore</span>
+                            <span class="text-slate-400">↔ Minore</span>
+                        </div>
+                        <div class="bg-slate-900/90 p-1.5 rounded-lg border border-slate-700/60">
+                            <span class="text-emerald-400 font-bold block">Giusto</span>
+                            <span class="text-slate-400">↔ Giusto</span>
+                        </div>
+                        <div class="bg-slate-900/90 p-1.5 rounded-lg border border-slate-700/60">
+                            <span class="text-rose-400 font-bold block">Aumentato</span>
+                            <span class="text-slate-400">↔ Diminuito</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Mappa Geometrica -->
+                <div class="bg-slate-800/95 border border-slate-700/80 p-3 rounded-2xl shadow">
+                    <h2 class="text-xs font-extrabold text-amber-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                        <span>📐</span> Mappa Geometrica (Radice su 5ª Corda)
+                    </h2>
+                    <pre class="bg-slate-900 p-2.5 rounded-xl border border-slate-700/60 font-mono text-[10px] text-amber-300 overflow-x-auto leading-tight">
+Corda    | Tasto -1   | STESSO TASTO | Tasto +1   | Tasto +2
+--------------------------------------------------------------
+3ª (SOL) |            | 7ª Min (b7)  | 7ª Mag (7M)| 1ª (Ottava)
+4ª (RE)  | 3ª Mag (3M)| 4ª Giusta(4) | Tritono(b5)| 5ª Giusta(5)
+5ª (LA)  |            | [ R ]        |            | 2ª Mag (9)
+                    </pre>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- GOATCOUNTER -->
+    <script data-goatcounter="https://adolfodidio.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+
+    <!-- SCRIPT APPLICATION -->
     <script>
         const CHROMATIC_NOTES = ['DO', 'DO#', 'RE', 'RE#', 'MI', 'FA', 'FA#', 'SOL', 'SOL#', 'LA', 'LA#', 'SI'];
         const DIATONIC_NOTES = ['DO', 'RE', 'MI', 'FA', 'SOL', 'LA', 'SI'];
@@ -458,37 +501,65 @@ Corda   | Tasto -2    | Tasto -1    | STESSO TASTO | Tasto +1    | Tasto +2
         let currentQuestion = {};
         let score = 0;
         let total = 0;
+        let autoAdvanceTimer = null;
 
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            
-            event.target.classList.add('active');
-            document.getElementById('tab-' + tabId).classList.add('active');
+        // TAB SWITCHING (100% Isolated)
+        function selectTab(tabId) {
+            // Remove active from all buttons
+            ['quiz', 'fretboard', 'theory'].forEach(id => {
+                const btn = document.getElementById('btn-' + id);
+                const pane = document.getElementById('pane-' + id);
+                if (btn) {
+                    btn.classList.remove('active');
+                    btn.classList.add('text-slate-400');
+                }
+                if (pane) {
+                    pane.classList.remove('active');
+                }
+            });
 
-            if(tabId === 'fretboard') {
-                updateFretboardOptions();
+            // Activate chosen tab
+            const activeBtn = document.getElementById('btn-' + tabId);
+            const activePane = document.getElementById('pane-' + tabId);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+                activeBtn.classList.remove('text-slate-400');
+            }
+            if (activePane) {
+                activePane.classList.add('active');
+            }
+
+            if (tabId === 'fretboard') {
+                drawFretboard();
             }
         }
 
-        function resetQuizAndGenerate() {
+        // QUIZ SYSTEM
+        function resetQuiz() {
+            if (autoAdvanceTimer) clearTimeout(autoAdvanceTimer);
             score = 0;
             total = 0;
-            document.getElementById('score').innerText = '0';
-            document.getElementById('total').innerText = '0';
-            document.getElementById('accuracy').innerText = '0%';
-            generateQuestion();
+            document.getElementById('score-val').innerText = '0';
+            document.getElementById('total-val').innerText = '0';
+            document.getElementById('acc-val').innerText = '100%';
+            nextQuestion();
         }
 
-        function generateQuestion() {
-            document.getElementById('feedback').style.display = 'none';
-            document.getElementById('next-btn').style.display = 'none';
+        function nextQuestion() {
+            if (autoAdvanceTimer) clearTimeout(autoAdvanceTimer);
+
+            const feedbackBox = document.getElementById('feedback-box');
+            const promptIdle = document.getElementById('prompt-idle');
+            
+            feedbackBox.classList.add('hidden');
+            feedbackBox.className = 'w-full h-full rounded-xl flex items-center justify-between px-3 border transition-all text-xs sm:text-sm font-semibold hidden';
+            promptIdle.classList.remove('hidden');
 
             const mode = document.getElementById('scale-mode').value;
             const isDiatonic = (mode === 'diatonic');
 
             let note1, note2, semitones;
-            const isAscending = Math.random() > 0.3;
+            const isAscending = Math.random() > 0.35;
 
             if (isDiatonic) {
                 const idx1 = Math.floor(Math.random() * DIATONIC_NOTES.length);
@@ -535,11 +606,27 @@ Corda   | Tasto -2    | Tasto -1    | STESSO TASTO | Tasto +1    | Tasto +2
                 isAscending: isAscending
             };
 
-            document.getElementById('question').innerHTML = 
-                `Da <span class="highlight">${note1}</span> a <span class="highlight">${note2}</span> (${currentQuestion.direction})`;
+            // Update DOM Note Displays
+            document.getElementById('note-start').innerText = note1;
+            document.getElementById('note-end').innerText = note2;
+            
+            const dirBadge = document.getElementById('dir-badge');
+            const dirIcon = document.getElementById('dir-icon');
+            const dirText = document.getElementById('dir-text');
 
+            if (isAscending) {
+                dirBadge.className = 'inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 mb-2';
+                dirIcon.innerText = '↗';
+                dirText.innerText = 'Ascendente';
+            } else {
+                dirBadge.className = 'inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/40 mb-2';
+                dirIcon.innerText = '↘';
+                dirText.innerText = 'Discendente';
+            }
+
+            // Options Selection (6 Choices)
             let options = [matchedInterval.name];
-            while (options.length < 4) {
+            while (options.length < 6) {
                 let randomInt = INTERVALS[Math.floor(Math.random() * INTERVALS.length)].name;
                 if (!options.includes(randomInt)) {
                     options.push(randomInt);
@@ -547,45 +634,69 @@ Corda   | Tasto -2    | Tasto -1    | STESSO TASTO | Tasto +1    | Tasto +2
             }
             options.sort(() => Math.random() - 0.5);
 
-            const optionsContainer = document.getElementById('options');
+            const optionsContainer = document.getElementById('options-container');
             optionsContainer.innerHTML = '';
             options.forEach(opt => {
                 const btn = document.createElement('button');
-                btn.className = 'option-btn';
+                btn.className = 'quiz-opt-btn h-11 sm:h-12 px-2 bg-slate-800/90 border border-slate-700/80 hover:border-amber-400/50 hover:bg-slate-750 text-white rounded-xl font-bold text-xs sm:text-sm text-center shadow-md active:scale-95 flex items-center justify-center';
                 btn.innerText = opt;
-                btn.onclick = () => checkAnswer(opt);
+                btn.onclick = () => answerQuestion(opt, btn);
                 optionsContainer.appendChild(btn);
             });
         }
 
-        function checkAnswer(selectedOption) {
-            const feedbackEl = document.getElementById('feedback');
+        function answerQuestion(selectedOption, clickedBtn) {
+            const feedbackBox = document.getElementById('feedback-box');
+            const feedbackText = document.getElementById('feedback-text');
+            const promptIdle = document.getElementById('prompt-idle');
+            
             total++;
-
             const isCorrect = selectedOption === currentQuestion.correctAnswer;
+
+            // Highlight buttons
+            document.querySelectorAll('.quiz-opt-btn').forEach(btn => {
+                btn.disabled = true;
+                if (btn.innerText === currentQuestion.correctAnswer) {
+                    btn.classList.add('correct');
+                } else if (btn === clickedBtn && !isCorrect) {
+                    btn.classList.add('wrong');
+                }
+            });
+
+            promptIdle.classList.add('hidden');
+            feedbackBox.classList.remove('hidden');
 
             if (isCorrect) {
                 score++;
-                feedbackEl.className = 'feedback correct';
-                feedbackEl.innerHTML = `<div>¡Esatto! 🎉</div>`;
+                feedbackBox.className = 'w-full h-full rounded-xl flex items-center justify-between px-3 border transition-all text-xs sm:text-sm font-semibold bg-emerald-950/90 border-emerald-500/70 text-emerald-200 shadow-md';
+                feedbackText.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg">🎉</span>
+                        <div>
+                            <div class="font-extrabold text-emerald-300">Esatto! (${currentQuestion.correctAnswer})</div>
+                            <div class="text-[10px] text-emerald-400 font-mono">${currentQuestion.semitones} semitoni di distanza</div>
+                        </div>
+                    </div>
+                `;
+                // Auto advance after 1.5s on correct
+                autoAdvanceTimer = setTimeout(() => {
+                    nextQuestion();
+                }, 1500);
             } else {
-                feedbackEl.className = 'feedback wrong';
-                let explanation = `Risposta corretta: <b>${currentQuestion.correctAnswer}</b>`;
+                feedbackBox.className = 'w-full h-full rounded-xl flex items-center justify-between px-3 border transition-all text-xs sm:text-sm font-semibold bg-rose-950/90 border-rose-500/70 text-rose-200 shadow-md';
+                let exp = `<div class="font-extrabold text-rose-300">Risposta: ${currentQuestion.correctAnswer}</div>`;
                 if (!currentQuestion.isAscending) {
                     const invVal = 9 - getIntervalNumber(currentQuestion.correctAnswer);
-                    explanation += `<br><small>💡 Regola del 9: Scendere di una ${currentQuestion.correctAnswer} = Salire di una ${invVal}ª</small>`;
+                    exp += `<div class="text-[10px] text-rose-300 font-mono font-normal">💡 Regola 9: Scendere di ${currentQuestion.correctAnswer} = Salire di ${invVal}ª</div>`;
+                } else {
+                    exp += `<div class="text-[10px] text-rose-300 font-mono font-normal">Distanza: ${currentQuestion.semitones} semitoni</div>`;
                 }
-                feedbackEl.innerHTML = explanation;
+                feedbackText.innerHTML = exp;
             }
 
-            document.querySelectorAll('.option-btn').forEach(btn => btn.disabled = true);
-
-            document.getElementById('score').innerText = score;
-            document.getElementById('total').innerText = total;
-            document.getElementById('accuracy').innerText = Math.round((score / total) * 100) + '%';
-
-            feedbackEl.style.display = 'flex';
-            document.getElementById('next-btn').style.display = 'block';
+            document.getElementById('score-val').innerText = score;
+            document.getElementById('total-val').innerText = total;
+            document.getElementById('acc-val').innerText = Math.round((score / total) * 100) + '%';
         }
 
         function getIntervalNumber(name) {
@@ -598,71 +709,105 @@ Corda   | Tasto -2    | Tasto -1    | STESSO TASTO | Tasto +1    | Tasto +2
             return 0;
         }
 
-        function updateFretboardOptions() {
-            const stringIdx = parseInt(document.getElementById('string-select').value);
-            const rootSelect = document.getElementById('root-select');
-            rootSelect.innerHTML = '';
+        // FRETBOARD SYSTEM - DIRECT TAP & REMAP
+        let currentRootString = 5; // Default: 6ª corda (MI Basso)
+        let currentRootFret = 3;   // Default: Tasto 3 (SOL)
 
-            const presets = [
-                { fret: 3, name: 'Tasto 3' },
-                { fret: 5, name: 'Tasto 5' },
-                { fret: 7, name: 'Tasto 7' },
-                { fret: 8, name: 'Tasto 8' },
-                { fret: 10, name: 'Tasto 10' }
-            ];
+        const STRING_NAMES = ['1ª (MI Cant.)', '2ª (SI)', '3ª (SOL)', '4ª (RE)', '5ª (LA)', '6ª (MI Basso)'];
 
-            presets.forEach(p => {
-                const noteName = CHROMATIC_NOTES[(STRING_TUNINGS[stringIdx] + p.fret) % 12];
-                const opt = document.createElement('option');
-                opt.value = p.fret;
-                opt.innerText = `${noteName} (${p.name})`;
-                rootSelect.appendChild(opt);
-            });
+        const INTERVAL_MAP = {
+            0: { label: 'R', type: 'root' },
+            1: { label: 'b2', type: 'interval-other' },
+            2: { label: '2M', type: 'interval-other' },
+            3: { label: 'b3', type: 'interval-triad' },
+            4: { label: '3M', type: 'interval-triad' },
+            5: { label: '4',  type: 'interval-other' },
+            6: { label: 'b5', type: 'interval-other' },
+            7: { label: '5',  type: 'interval-triad' },
+            8: { label: 'b6', type: 'interval-other' },
+            9: { label: '6',  type: 'interval-other' },
+            10: { label: 'b7', type: 'interval-seventh' },
+            11: { label: '7M', type: 'interval-seventh' }
+        };
 
-            renderFretboard();
+        function selectFretAsRoot(stringIdx, fretIdx) {
+            currentRootString = stringIdx;
+            currentRootFret = fretIdx;
+            drawFretboard();
         }
 
-        function renderFretboard() {
-            const fretboard = document.getElementById('interactive-fretboard');
-            const fretNumbers = document.getElementById('fret-numbers');
+        function drawFretboard() {
+            const fretboard = document.getElementById('fretboard-canvas');
+            const fretNumbers = document.getElementById('fret-num-labels');
+            if (!fretboard || !fretNumbers) return;
+
             fretboard.innerHTML = '';
             fretNumbers.innerHTML = '';
 
-            const rootStringIdx = parseInt(document.getElementById('string-select').value);
-            const rootFret = parseInt(document.getElementById('root-select').value) || 3;
+            const rootNoteIndex = (STRING_TUNINGS[currentRootString] + currentRootFret) % 12;
+            const rootNoteName = CHROMATIC_NOTES[rootNoteIndex];
 
-            for(let f=0; f<=12; f++) {
+            // Update live info display
+            const infoEl = document.getElementById('fretboard-root-info');
+            if (infoEl) {
+                infoEl.innerHTML = `Radice [R]: <span class="text-amber-400 font-extrabold text-xs sm:text-sm bg-slate-900 px-1.5 py-0.5 rounded border border-amber-400/40">${rootNoteName}</span> <span class="text-slate-400 text-[10px]">(${STRING_NAMES[currentRootString]} • Tasto ${currentRootFret})</span>`;
+            }
+
+            for (let f = 0; f <= 12; f++) {
                 const numSpan = document.createElement('span');
-                numSpan.innerText = f;
+                if (f === 0) {
+                    numSpan.innerHTML = '<span class="px-1 py-0.5 rounded bg-slate-700/80 text-slate-200 font-extrabold border border-slate-500/50 text-[10px]">0</span>';
+                    numSpan.title = 'Capotasto (Corde a vuoto)';
+                } else {
+                    numSpan.innerText = f;
+                }
+                
+                if (f === currentRootFret) {
+                    numSpan.style.color = '#ef4444';
+                    numSpan.style.fontWeight = '900';
+                } else if ([3, 5, 7, 9, 12].includes(f)) {
+                    numSpan.style.color = '#f59e0b';
+                    numSpan.style.fontWeight = 'bold';
+                }
                 fretNumbers.appendChild(numSpan);
             }
 
             for (let s = 0; s < 6; s++) {
                 const stringEl = document.createElement('div');
-                stringEl.className = 'string';
+                stringEl.className = 'g-string';
 
                 for (let f = 0; f <= 12; f++) {
                     const fretEl = document.createElement('div');
-                    fretEl.className = 'fret';
-
+                    fretEl.className = f === 0 ? 'g-fret fret-zero' : 'g-fret';
                     const noteIndex = (STRING_TUNINGS[s] + f) % 12;
+                    const thisNoteName = CHROMATIC_NOTES[noteIndex];
+                    const fretDesc = f === 0 ? 'Capotasto (Corda a vuoto)' : `Tasto ${f}`;
+                    fretEl.title = `Tocca per impostare ${thisNoteName} (${STRING_NAMES[s]}, ${fretDesc}) come Radice [R]`;
+                    fretEl.onclick = () => selectFretAsRoot(s, f);
+
                     const marker = document.createElement('div');
 
-                    if (s === rootStringIdx && f === rootFret) {
-                        marker.className = 'note-marker root';
+                    if (s === currentRootString && f === currentRootFret) {
+                        marker.className = 'fret-marker root';
                         marker.innerText = 'R';
                     } else {
-                        const rootNoteIndex = (STRING_TUNINGS[rootStringIdx] + rootFret) % 12;
                         const semitoneDiff = (noteIndex - rootNoteIndex + 12) % 12;
+                        const isCloseFret = Math.abs(f - currentRootFret) <= 3;
+                        const isCloseString = Math.abs(s - currentRootString) <= 3;
 
-                        const targetIntervals = { 3: 'b3', 4: '3M', 5: '4', 6: 'b5', 7: '5', 10: 'b7', 11: '7M' };
-
-                        if (targetIntervals[semitoneDiff] && Math.abs(f - rootFret) <= 3 && Math.abs(s - rootStringIdx) <= 2) {
-                            marker.className = 'note-marker target';
-                            marker.innerText = targetIntervals[semitoneDiff];
+                        // Se vicino alla radice, mostra la geometria degli intervalli
+                        if (isCloseFret && isCloseString) {
+                            const intInfo = INTERVAL_MAP[semitoneDiff];
+                            if (semitoneDiff === 0) {
+                                marker.className = 'fret-marker root';
+                                marker.innerText = 'R';
+                            } else if (intInfo) {
+                                marker.className = `fret-marker ${intInfo.type}`;
+                                marker.innerText = intInfo.label;
+                            }
                         } else {
-                            marker.className = 'note-marker hidden-note';
-                            marker.innerText = CHROMATIC_NOTES[noteIndex];
+                            marker.className = 'fret-marker hidden-note';
+                            marker.innerText = thisNoteName;
                         }
                     }
 
@@ -673,11 +818,27 @@ Corda   | Tasto -2    | Tasto -1    | STESSO TASTO | Tasto +1    | Tasto +2
             }
         }
 
-        function updateFretboardView() {
-            renderFretboard();
+        // TOGGLE LEGEND VISIBILITY
+        function toggleFretboardLegend() {
+            const legendEl = document.getElementById('fretboard-legend');
+            const toggleText = document.getElementById('legend-toggle-text');
+            const toggleIcon = document.getElementById('legend-toggle-icon');
+            if (!legendEl) return;
+
+            const isHidden = legendEl.classList.contains('hidden');
+            if (isHidden) {
+                legendEl.classList.remove('hidden');
+                if (toggleText) toggleText.innerText = 'Nascondi Legenda';
+                if (toggleIcon) toggleIcon.innerText = '✕';
+            } else {
+                legendEl.classList.add('hidden');
+                if (toggleText) toggleText.innerText = 'Mostra Legenda Intervalli';
+                if (toggleIcon) toggleIcon.innerText = '📖';
+            }
         }
 
-        generateQuestion();
+        // Initialize quiz on load
+        nextQuestion();
     </script>
 </body>
 </html>

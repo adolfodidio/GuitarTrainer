@@ -26,12 +26,21 @@ Il progetto è suddiviso in 4 moduli di allenamento indipendenti, ognuno con uno
 - **Uso:** (Nota: questa sezione contiene regole e visualizzazioni per applicare scale con l'aggiunta di note di passaggio tipiche del fraseggio bebop, fondamentali per il comping e i solo).
 
 ### 3. Trainer Intervalli & Armonia (`TrainerIntervalli.html`)
-**Scopo:** Allenare il cervello al calcolo rapido degli intervalli musicali (fondamentale per costruire accordi e assoli).
-- **Funzionamento:** Include un quiz interattivo, un visualizzatore della tastiera e pillole di teoria rapida.
-- **Uso:**
-  - **Quiz Intervalli:** Calcola mentalmente le distanze (es. da DO a FA#) sia in senso ascendente che discendente.
-  - **Tastiera:** Seleziona una radice su una specifica corda e l'app ti mostrerà dove si trovano esattamente le terze, quinte e settime relative a quella radice.
-  - **Teoria:** Apprendi concetti come la "Regola del 9" per invertire mentalmente gli intervalli al volo.
+**Scopo:** Allenare la mente al calcolo rapido degli intervalli musicali e visualizzare istantaneamente la loro geometria armonica sul manico della chitarra.
+- **Interfaccia Mobile-First:** Progettata su viewport `100dvh` in schermata singola (zero scrolling) per un'esperienza nativa e fluida su smartphone.
+- **Funzionamento & Modalità:**
+  - **Quiz Intervalli:**
+    - Calcola mentalmente le distanze (es. da DO a FA# o da LA a MI♭) in senso ascendente (↗) o discendente (↘).
+    - Griglia ergonomica a **6 opzioni di risposta** (con target touch a standard HIG da 44-48px).
+    - Modalità Diatonica o Cromatica, punteggio e percentuale di accuratezza in tempo reale, feedback stabile con spiegazione e pulsante "Prossima".
+  - **Visualizzatore Tastiera 100% Touch:**
+    - **Tap-to-Remap Istantaneo:** Tocca direttamente qualunque tasto su qualsiasi corda per impostarlo come nuova **Radice [R]** (in rosso brillante pulsante).
+    - **Mappa Armonica Automatica:** Visualizza le relazioni armoniche vicine alla radice: Triadi maggiori e minori (🟢 3M / b3 / 5), Settime (🟣 b7 / 7M), Tensioni ed estensioni (🔵 2M / 4 / 6 / b5).
+    - **Capotasto Fisico Evidenziato (Tasto 0):** Sfondo chiaro e solida barra d'avorio per identificare chiaramente le corde a vuoto, utilizzabili anch'esse come radici al tocco.
+    - **Note in Filigrana:** Note fuori dal cluster armonico visibili ad alto contrasto per un rapido orientamento sul manico.
+    - **Legenda Intervalli a Scomparsa (Toggle):** Pulsante dedicato per visualizzare o nascondere la legenda dettagliata a colori senza spostare la posizione della tastiera (ancorata in alto).
+  - **Teoria Rapida:**
+    - Compendio teorico interattivo con la "Regola del 9" per invertire gli intervalli discendenti e tabella di riferimento dei semitoni.
 
 ### 4. Pat Martino Logic (`PatMartino.html`)
 **Scopo:** Studiare l'approccio unico di Pat Martino basato sulla simmetria e sulla conversione in minore.
