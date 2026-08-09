@@ -1,0 +1,13 @@
+{
+  "name": "guitar-jazz-trainer",
+  "version": "1.0.0",
+  "description": "Suite didattica interattiva per l'apprendimento della chitarra e dell'armonia jazz",
+  "scripts": {
+    "start": "live-server"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  },
+  "author": "",
+  "license": "ISC"
+}

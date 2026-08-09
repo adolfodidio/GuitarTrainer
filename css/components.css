@@ -1,0 +1,61 @@
+/* css/components.css - Reusable UI Components & Nav */
+.global-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: rgba(15, 23, 42, 0.95);
+    border-bottom: 1px solid rgba(51, 65, 85, 0.8);
+    backdrop-filter: blur(8px);
+    z-index: 50;
+    flex-shrink: 0;
+}
+
+.global-nav-brand {
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--accent);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.global-nav-links {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.nav-link {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-decoration: none;
+    padding: 0.4rem 0.75rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.nav-link:hover, .nav-link.active {
+    color: var(--text-primary);
+    background-color: rgba(51, 65, 85, 0.6);
+}
+
+.nav-link.active {
+    color: var(--accent);
+    background-color: rgba(245, 158, 11, 0.1);
+}
+
+/* Common App Layout */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+}
+
+.app-content {
+    flex: 1;
+    overflow: hidden; /* Modules should handle their own scrolling */
+    display: flex;
+    flex-direction: column;
+}

@@ -6,11 +6,9 @@
     <title>Guitar & Jazz Trainer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/components.css">
     <style>
-        body { 
-            font-family: 'Inter', sans-serif;
-            background-color: #111827; /* bg-gray-900 */
-        }
         .app-card {
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
@@ -20,10 +18,11 @@
         }
     </style>
 </head>
-<body class="text-white min-h-screen flex flex-col items-center justify-center p-6">
+<body class="text-white min-h-screen flex flex-col items-center justify-center p-6 app-container">
 
-    <header class="text-center mb-12">
-        <h1 class="text-4xl sm:text-5xl font-extrabold text-indigo-400 mb-2">Benvenuto</h1>
+    <div class="app-content w-full items-center justify-center overflow-y-auto">
+        <header class="text-center mb-12 mt-8">
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-indigo-400 mb-2">Benvenuto</h1>
         <p class="text-lg text-gray-400">Scegli la tua sessione di allenamento</p>
     </header>
 
@@ -76,11 +75,16 @@
     <footer class="mt-16 text-center text-gray-500 text-sm">
         <p>&copy; 2026 - Un progetto per lo studio e la didattica.</p>
     </footer>
+    </div> <!-- close app-content -->
+
+<script type="module">
+    import { initGlobalNav } from './js/components/nav.js';
+    initGlobalNav();
+</script>
 
 <script data-goatcounter="https://adolfodidio.goatcounter.com/count"
     async src="https://gc.zgo.at/count.js">
 </script>
-
 
 </body>
 </html>
