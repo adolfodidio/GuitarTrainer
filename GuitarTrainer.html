@@ -2,114 +2,111 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Guitar Fretboard Trainer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="FretboardTrainer.css">
+    <link rel="stylesheet" href="css/fretboard-trainer.css">
 </head>
-<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center p-4 sm:p-6">
+<body class="gt-body">
 
     <!-- Countdown Overlay -->
-    <div id="countdown-overlay" class="hidden-section fixed inset-0 bg-gray-900/80 backdrop-blur-sm flex items-center justify-center z-50">
-        <div id="countdown-text" class="text-9xl font-extrabold text-white"></div>
+    <div id="countdown-overlay" class="hidden-section gt-countdown-overlay">
+        <div id="countdown-text" class="gt-countdown-text"></div>
     </div>
 
-    <a href="index.html" class="absolute top-4 left-4 text-gray-400 hover:text-indigo-400 transition-colors text-sm sm:text-base">
+    <a href="index.html" class="gt-back-link">
         &larr; Torna al menu
     </a>
 
-    <header class="w-full max-w-md mb-6 mt-4 text-center">
-        <h1 class="text-3xl sm:text-4xl font-bold text-indigo-500 mb-1">Fretboard Trainer</h1>
-        <p class="text-gray-400 text-sm sm:text-base">Migliora la tua conoscenza della chitarra</p>
+    <header class="gt-header">
+        <h1 class="gt-title">Fretboard Trainer</h1>
+        <p class="gt-subtitle">Migliora la tua conoscenza della chitarra</p>
     </header>
 
     <!-- Pannello Impostazioni -->
-    <div id="settings-panel" class="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700 overflow-y-auto max-h-[85vh]">
-        <h2 class="text-xl font-semibold mb-6 border-b border-gray-600 pb-2">Configurazione Sessione</h2>
+    <div id="settings-panel" class="gt-panel">
+        <h2 class="gt-panel-title">Configurazione Sessione</h2>
         
-        <div class="space-y-4">
-            <div>
-                <label for="testMode" class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Tipo di Test</label>
-                <select id="testMode" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer">
-                    <option value="single-note" selected>Nota Singola (Trova la nota)</option>
-                    <option value="interval">Intervallo Relativo (Nota + Intervallo)</option>
-                </select>
-            </div>
-
-            <div>
-                <label for="numTests" class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Numero di Test</label>
-                <input type="number" id="numTests" value="20" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
-            </div>
-
-            <div>
-                <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Corde da includere</label>
-                <div class="grid grid-cols-6 gap-2">
-                    <template id="string-tpl">
-                        <div class="relative">
-                            <input type="checkbox" id="str{{id}}" class="hidden string-checkbox" checked value="{{id}}">
-                            <label for="str{{id}}" class="flex items-center justify-center h-10 w-full bg-gray-700 border border-gray-600 rounded-lg cursor-pointer text-sm font-bold transition-all">{{id}}</label>
-                        </div>
-                    </template>
-                    <div id="strings-container" class="contents"></div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label for="fretStart" class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Tasto Inizio</label>
-                    <input type="number" id="fretStart" value="0" min="0" max="22" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 outline-none">
-                </div>
-                <div>
-                    <label for="fretEnd" class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Tasto Fine</label>
-                    <input type="number" id="fretEnd" value="22" min="0" max="22" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 outline-none">
-                </div>
-            </div>
-
-            <div>
-                <label for="scaleType" class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Scala Musicale</label>
-                <select id="scaleType" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer">
-                    <option value="diatonic" selected>Diatonica (Do Maggiore)</option>
-                    <option value="chromatic">Cromatica (Tutte le note)</option>
-                </select>
-            </div>
-
-            <div>
-                <label for="timeLimit" class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Tempo per risposta (s)</label>
-                <input type="number" id="timeLimit" value="20" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 outline-none">
-            </div>
-
-            <button onclick="startSession()" class="w-full mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 px-4 rounded-xl transition duration-200 shadow-lg active:scale-[0.98]">
-                AVVIA SESSIONE
-            </button>
+        <div class="gt-form-group">
+            <label for="testMode" class="gt-label">Tipo di Test</label>
+            <select id="testMode" class="gt-select">
+                <option value="single-note" selected>Nota Singola (Trova la nota)</option>
+                <option value="interval">Intervallo Relativo (Nota + Intervallo)</option>
+            </select>
         </div>
+
+        <div class="gt-form-group">
+            <label for="numTests" class="gt-label">Numero di Test</label>
+            <input type="number" id="numTests" value="20" class="gt-input">
+        </div>
+
+        <div class="gt-form-group">
+            <label class="gt-label">Corde da includere</label>
+            <div class="gt-checkbox-grid">
+                <template id="string-tpl">
+                    <div class="gt-checkbox-wrapper">
+                        <input type="checkbox" id="str{{id}}" class="string-checkbox" checked value="{{id}}">
+                        <label for="str{{id}}" class="gt-checkbox-label">{{id}}</label>
+                    </div>
+                </template>
+                <div id="strings-container" style="display: contents;"></div>
+            </div>
+        </div>
+
+        <div class="gt-form-group gt-grid-2">
+            <div>
+                <label for="fretStart" class="gt-label">Tasto Inizio</label>
+                <input type="number" id="fretStart" value="0" min="0" max="22" class="gt-input">
+            </div>
+            <div>
+                <label for="fretEnd" class="gt-label">Tasto Fine</label>
+                <input type="number" id="fretEnd" value="22" min="0" max="22" class="gt-input">
+            </div>
+        </div>
+
+        <div class="gt-form-group">
+            <label for="scaleType" class="gt-label">Scala Musicale</label>
+            <select id="scaleType" class="gt-select">
+                <option value="diatonic" selected>Diatonica (Do Maggiore)</option>
+                <option value="chromatic">Cromatica (Tutte le note)</option>
+            </select>
+        </div>
+
+        <div class="gt-form-group">
+            <label for="timeLimit" class="gt-label">Tempo per risposta (s)</label>
+            <input type="number" id="timeLimit" value="20" class="gt-input">
+        </div>
+
+        <button onclick="startSession()" class="gt-btn-primary">
+            AVVIA SESSIONE
+        </button>
     </div>
 
     <!-- Pannello Gioco -->
-    <div id="game-panel" class="hidden-section w-full max-w-md flex flex-col items-center">
-        <div class="w-full bg-gray-700 rounded-full h-1.5 mb-6">
-            <div id="progressBar" class="bg-indigo-500 h-1.5 rounded-full transition-all duration-500"></div>
+    <div id="game-panel" class="hidden-section gt-game-container">
+        <div class="gt-progress-container">
+            <div id="progressBar" class="gt-progress-bar"></div>
         </div>
 
-        <div class="bg-gray-800 p-6 sm:p-8 rounded-3xl shadow-2xl border border-gray-700 w-full text-center relative overflow-hidden">
-            <div id="timerDisplay" class="absolute top-4 right-6 text-xl sm:text-2xl font-mono text-yellow-400">20</div>
+        <div class="gt-game-card">
+            <div id="timerDisplay" class="gt-timer">20</div>
             
-            <p id="modeLabel" class="text-gray-400 text-xs sm:text-sm uppercase tracking-widest mb-2">Trova la nota</p>
-            <h2 id="questionText" class="text-4xl sm:text-5xl font-extrabold text-white mb-2 leading-tight">--</h2>
+            <p id="modeLabel" class="gt-mode-label">Trova la nota</p>
+            <h2 id="questionText" class="gt-question">--</h2>
             
-            <div class="mt-6 sm:mt-10 p-4 bg-gray-900 rounded-2xl border border-gray-700 flex flex-col items-center">
-                <span class="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Microfono / Rilevamento</span>
-                <div class="flex items-baseline space-x-3 mt-1">
-                    <span id="detectedNote" class="text-2xl sm:text-4xl font-bold text-indigo-400">--</span>
-                    <span id="detectedFreq" class="text-xs sm:text-sm text-gray-500 font-mono">0 Hz</span>
+            <div class="gt-detection-box">
+                <span class="gt-detection-title">Microfono / Rilevamento</span>
+                <div class="gt-detection-row">
+                    <span id="detectedNote" class="gt-detected-note">--</span>
+                    <span id="detectedFreq" class="gt-detected-freq">0 Hz</span>
                 </div>
             </div>
 
-            <button onclick="finishSession()" class="w-full mt-10 bg-red-600 hover:bg-red-500 text-white font-bold py-4 px-4 rounded-xl transition duration-200 shadow-lg active:scale-[0.98] flex items-center justify-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <button onclick="finishSession()" class="gt-btn-danger">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
                 INTERROMPI SESSIONE
@@ -118,58 +115,58 @@
     </div>
 
     <!-- Pannello Risultati -->
-    <div id="results-panel" class="hidden-section w-full max-w-md bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-2xl border border-gray-700 overflow-y-auto max-h-[90vh]">
-        <h2 class="text-2xl sm:text-3xl font-bold text-center mb-6">Risultati</h2>
+    <div id="results-panel" class="hidden-section gt-panel">
+        <h2 class="gt-results-title">Risultati</h2>
         
-        <div class="grid grid-cols-2 gap-4 mb-6">
-            <div class="bg-gray-900/50 p-4 rounded-xl text-center border border-gray-700">
-                <p class="text-gray-400 text-[10px] uppercase font-bold">Accuratezza</p>
-                <p id="resultAccuracy" class="text-2xl sm:text-3xl font-bold text-green-400">0%</p>
+        <div class="gt-stats-grid">
+            <div class="gt-stat-box">
+                <p class="gt-stat-label">Accuratezza</p>
+                <p id="resultAccuracy" class="gt-stat-value gt-text-green">0%</p>
             </div>
-            <div class="bg-gray-900/50 p-4 rounded-xl text-center border border-gray-700">
-                <p class="text-gray-400 text-[10px] uppercase font-bold">Tempo Medio</p>
-                <p id="resultAvgTime" class="text-2xl sm:text-3xl font-bold text-blue-400">0s</p>
+            <div class="gt-stat-box">
+                <p class="gt-stat-label">Tempo Medio</p>
+                <p id="resultAvgTime" class="gt-stat-value gt-text-blue">0s</p>
             </div>
         </div>
 
-        <div class="space-y-6">
-            <div class="bg-gray-900 p-2 sm:p-4 rounded-xl border border-gray-700">
-                <p class="text-xs font-bold text-gray-500 uppercase mb-2 text-center">Accuratezza per Nota</p>
-                <div class="h-48 w-full">
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div class="gt-chart-box">
+                <p class="gt-chart-title">Accuratezza per Nota</p>
+                <div class="gt-chart-container">
                     <canvas id="statsChart"></canvas>
                 </div>
             </div>
 
-            <div class="bg-gray-900 p-2 sm:p-4 rounded-xl border border-gray-700">
-                <p class="text-xs font-bold text-gray-500 uppercase mb-2 text-center">Accuratezza per Corda</p>
-                <div class="h-48 w-full">
+            <div class="gt-chart-box">
+                <p class="gt-chart-title">Accuratezza per Corda</p>
+                <div class="gt-chart-container">
                     <canvas id="stringsChart"></canvas>
                 </div>
             </div>
 
             <!-- Heatmap Tastiera -->
-            <div class="bg-gray-900 p-4 rounded-xl border border-gray-700">
-                <p class="text-xs font-bold text-gray-500 uppercase mb-3 text-center tracking-widest">Heatmap Tastiera</p>
-                <div id="fretboardHeatmap" class="overflow-x-auto pb-2">
+            <div class="gt-chart-box">
+                <p class="gt-chart-title">Heatmap Tastiera</p>
+                <div id="fretboardHeatmap" class="gt-heatmap-wrap">
                     <!-- JS inietta qui la heatmap -->
                 </div>
-                <div class="flex justify-between items-center text-[10px] text-gray-500 px-2 mt-2">
+                <div class="gt-heatmap-legend">
                     <span>Meno richiesti</span>
-                    <div class="flex-1 h-1.5 mx-3 bg-gradient-to-r from-gray-700 to-green-500 rounded-full opacity-50"></div>
+                    <div class="gt-heatmap-gradient"></div>
                     <span>Più richiesti</span>
                 </div>
             </div>
 
             <!-- Log della Sessione -->
-            <div class="bg-gray-900 p-4 rounded-xl border border-gray-700">
-                <p class="text-xs font-bold text-gray-500 uppercase mb-3 text-center tracking-widest">Riepilogo Richieste</p>
-                <div id="sessionLog" class="text-xs space-y-4 max-h-60 overflow-y-auto pr-2">
-                    <div class="text-gray-400 italic text-center">Nessun dato disponibile</div>
+            <div class="gt-chart-box">
+                <p class="gt-chart-title">Riepilogo Richieste</p>
+                <div id="sessionLog" class="gt-log-box">
+                    <div class="gt-log-empty">Nessun dato disponibile</div>
                 </div>
             </div>
         </div>
 
-        <button onclick="location.reload()" class="w-full mt-8 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl transition duration-200 shadow-lg active:scale-[0.98]">
+        <button onclick="location.reload()" class="gt-btn-primary">
             NUOVA SESSIONE
         </button>
     </div>

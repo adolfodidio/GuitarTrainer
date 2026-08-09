@@ -1,5 +1,5 @@
 // js/utils/audio-analyzer.js
-import { noteFromPitch, getNoteName } from './music-data.js';
+import { noteFromPitch, getNoteName, frequencyFromNoteNumber } from './music-data.js';
 
 let audioContext = null;
 let analyser = null;
@@ -7,6 +7,59 @@ let microphoneStream = null;
 
 export function getAudioContext() {
     return audioContext;
+}
+
+export function centsOffFromPitch(frequency, note) {
+    return Math.floor(1200 * Math.log2(frequency / frequencyFromNoteNumber(note)));
+}
+
+let droneOscillators = [];
+let droneGain = null;
+
+export function playDrone(frequency) {
+    if (!audioContext) return;
+    stopDrone();
+
+    const freqs = [frequency, frequency * 1.5, frequency * 2];
+    droneGain = audioContext.createGain();
+    droneGain.gain.setValueAtTime(0, audioContext.currentTime);
+    droneGain.gain.linearRampToValueAtTime(0.15, audioContext.currentTime + 1); // fade in
+    droneGain.connect(audioContext.destination);
+
+    freqs.forEach((f, idx) => {
+        const osc = audioContext.createOscillator();
+        osc.type = idx === 0 ? 'triangle' : 'sine';
+        osc.frequency.value = f;
+        
+        // Slightly detune to make it richer
+        if (idx === 1) osc.detune.value = 2; 
+
+        osc.connect(droneGain);
+        osc.start();
+        droneOscillators.push(osc);
+    });
+}
+
+export function stopDrone() {
+    if (droneOscillators.length > 0) {
+        const t = audioContext.currentTime;
+        if (droneGain) {
+            droneGain.gain.cancelScheduledValues(t);
+            droneGain.gain.setValueAtTime(droneGain.gain.value, t);
+            droneGain.gain.linearRampToValueAtTime(0, t + 0.5); // fade out
+        }
+        
+        setTimeout(() => {
+            droneOscillators.forEach(osc => {
+                try { osc.stop(); } catch(e) {}
+            });
+            droneOscillators = [];
+            if (droneGain) {
+                droneGain.disconnect();
+                droneGain = null;
+            }
+        }, 500);
+    }
 }
 
 export function playTargetNote(frequency) {
@@ -90,9 +143,10 @@ export async function initAudio(onPitchUpdate) {
             if (freq !== -1) {
                 const midiNum = noteFromPitch(freq);
                 const noteNameDisplay = getNoteName(midiNum);
-                onPitchUpdate(freq, midiNum, noteNameDisplay);
+                const cents = centsOffFromPitch(freq, midiNum);
+                onPitchUpdate(freq, midiNum, noteNameDisplay, cents);
             } else {
-                onPitchUpdate(-1, null, null);
+                onPitchUpdate(-1, null, null, 0);
             }
             requestAnimationFrame(updatePitch);
         }

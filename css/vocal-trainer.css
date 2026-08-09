@@ -1,0 +1,64 @@
+/* css/vocal-trainer.css */
+.vt-body { 
+    display: flex; 
+    flex-direction: column; 
+    padding: 0.5rem; 
+    max-width: 32rem; 
+    margin: 0 auto; 
+    width: 100%; 
+    justify-content: space-between; 
+    user-select: none; 
+    min-height: 100vh; 
+    background-color: #0f172a; 
+    color: #f8fafc; 
+    font-family: 'Inter', sans-serif; 
+    box-sizing: border-box; 
+}
+@media (min-width: 640px) { .vt-body { padding: 1rem; } }
+
+/* Header */
+.vt-header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-shrink: 0; height: 2.25rem; margin-bottom: 0.5rem; }
+.vt-back-btn { display: flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; font-weight: 700; color: #cbd5e1; padding: 0.375rem 0.75rem; border-radius: 0.5rem; background-color: rgba(30, 41, 59, 0.9); border: 1px solid rgba(51, 65, 85, 0.8); text-decoration: none; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.vt-back-btn:hover { color: #f472b6; }
+.vt-title { font-size: 0.875rem; font-weight: 800; color: #f472b6; margin: 0; display: flex; align-items: center; gap: 0.25rem; }
+
+/* Tabs */
+.vt-nav { display: grid; grid-template-columns: repeat(3, 1fr); padding: 0.25rem; background-color: rgba(15, 23, 42, 0.95); border-radius: 0.75rem; border: 1px solid #1e293b; margin-bottom: 0.5rem; }
+.vt-tab-btn { padding: 0.5rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600; color: #94a3b8; border: none; background: transparent; cursor: pointer; transition: all 0.2s; }
+.vt-tab-btn.active { background-color: #f472b6; color: #0f172a; font-weight: 800; box-shadow: 0 2px 10px rgba(244, 114, 182, 0.4); }
+
+.vt-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.vt-pane { display: none !important; flex-direction: column; height: 100%; gap: 0.5rem; }
+.vt-pane.active { display: flex !important; }
+
+/* Controls */
+.vt-controls { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background-color: rgba(30, 41, 59, 0.9); border-radius: 0.75rem; border: 1px solid rgba(51, 65, 85, 0.7); }
+.vt-btn { padding: 0.375rem 0.75rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 0.25rem; }
+.vt-btn-primary { background-color: #f472b6; color: #0f172a; }
+.vt-btn-primary:active { transform: scale(0.95); }
+.vt-btn-danger { background-color: #ef4444; color: white; }
+
+/* Tuner UI */
+.vt-tuner-card { flex: 1; background-color: rgba(30, 41, 59, 0.95); border: 1px solid rgba(51, 65, 85, 0.8); border-radius: 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; position: relative; }
+.vt-target-box { text-align: center; margin-bottom: 2rem; }
+.vt-target-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; margin-bottom: 0.5rem; }
+.vt-target-note { font-size: 3rem; font-weight: 900; color: #f472b6; line-height: 1; }
+
+.vt-tuner-container { width: 100%; max-width: 250px; position: relative; height: 80px; margin-bottom: 2rem; display: flex; flex-direction: column; justify-content: flex-end; }
+.vt-tuner-arc { width: 100%; height: 8px; background: linear-gradient(90deg, #ef4444 0%, #f59e0b 30%, #10b981 50%, #f59e0b 70%, #ef4444 100%); border-radius: 4px; position: relative; overflow: visible; }
+.vt-tuner-center { position: absolute; left: 50%; top: -6px; bottom: -6px; width: 2px; background-color: white; transform: translateX(-50%); z-index: 2; }
+.vt-tuner-indicator { position: absolute; top: -10px; width: 4px; height: 28px; background-color: white; border-radius: 2px; box-shadow: 0 0 10px rgba(255,255,255,0.8); left: 50%; transform: translateX(-50%); transition: left 0.1s ease-out, background-color 0.2s; z-index: 3; }
+.vt-tuner-labels { display: flex; justify-content: space-between; width: 100%; font-size: 0.625rem; font-weight: 700; color: #64748b; margin-top: 12px; }
+
+.vt-status { font-size: 1.25rem; font-weight: 800; font-family: monospace; }
+.text-green { color: #10b981; }
+.text-red { color: #ef4444; }
+.text-yellow { color: #f59e0b; }
+.text-gray { color: #64748b; }
+
+/* Intervals & Drone */
+.vt-drone-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; width: 100%; margin-bottom: 1rem; }
+.vt-select { background-color: #0f172a; border: 1px solid rgba(71, 85, 105, 0.8); border-radius: 0.5rem; padding: 0.5rem; font-size: 0.875rem; font-weight: 500; color: white; width: 100%; outline: none; }
+.vt-interval-target { font-size: 1.5rem; font-weight: 800; color: #fcd34d; margin-top: 1rem; }
+
+.vt-mic-prompt { font-size: 0.75rem; color: #94a3b8; font-style: italic; text-align: center; }

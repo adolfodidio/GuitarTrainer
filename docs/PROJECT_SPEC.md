@@ -34,6 +34,12 @@ L'applicazione è sviluppata come un insieme di moduli (modello multi-pagina) e 
 - Geometria parentale: Trasformazione visiva dell'accordo diminuito abbassando i gradi di un semitono per ottenere accordi di settima di dominante.
 - Visualizzazione di schemi di fraseggio lineari continui sul manico.
 
+## 5. Vocal Intonation Trainer
+- Analisi real-time del pitch da microfono e conversione della deviazione in *cents*.
+- Accordatore visivo interattivo.
+- Generatore di droni (pedale armonico continuo a più oscillatori) per l'ear training.
+- Sfide "Call & Response" per il calcolo e l'intonazione degli intervalli musicali.
+
 # Requisiti UX/UI
 - Responsive design con predilezione per dispositivi Mobile (specialmente per uso rapido/didattico).
 - Nessun tempo di caricamento percettibile. Transizioni fluide tra gli stati.

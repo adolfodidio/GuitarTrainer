@@ -8,6 +8,7 @@
     --fretboard-wood: #1e140f;
     --fret-wire: #64748b;
     --text-primary: #f1f5f9;
+    --tap-target-size: 44px; /* Generous tap targets for mobile */
 }
 
 * {

@@ -10,7 +10,7 @@ Per iniziare, apri semplicemente il file `index.html` all'interno del tuo browse
 
 ## 🛠 I Moduli Disponibili
 
-Il progetto è suddiviso in 4 moduli di allenamento indipendenti, ognuno con uno scopo specifico.
+Il progetto è suddiviso in 5 moduli di allenamento indipendenti, ognuno con uno scopo specifico.
 
 ### 1. Guitar Fretboard Trainer (`GuitarTrainer.html`)
 **Scopo:** Migliorare la conoscenza istantanea delle note e degli intervalli sulla tastiera.
@@ -48,6 +48,14 @@ Il progetto è suddiviso in 4 moduli di allenamento indipendenti, ognuno con uno
 - **Uso:**
   - **Minor Conversion Trainer:** Quiz rapido in cui ti viene presentato un accordo (es. Dominante, Maggiore, Alterato) e devi scegliere su quale accordo Minore 7 devi concentrarti per l'improvvisazione.
   - **Geometria Parentale:** Uno strumento visivo interattivo. Seleziona un accordo Diminuito 7 e clicca su una delle sue note per abbassarla di un semitono, visualizzando in tempo reale come si trasforma in 4 diversi accordi di Dominante 7.
+
+### 5. Vocal Intonation Trainer (`VocalTrainer.html`)
+**Scopo:** Sviluppare l'orecchio relativo e migliorare l'intonazione vocale.
+- **Funzionamento:** Utilizza la Web Audio API per monitorare costantemente la tua voce tramite il microfono, restituendo un feedback visivo immediato (calcolato in "cents" di errore).
+- **Uso:**
+  - **Matching:** L'app ti dà una nota, e tu devi cantarla nel microfono centrandola nel verde.
+  - **Drone:** Scegli un pedale armonico di base (es. DO) e un intervallo (es. Terza Maggiore). Canta l'intervallo sopra il drone di sottofondo (Usa le cuffie per un'esperienza perfetta!).
+  - **Intervalli:** Risolvi le sfide "Call & Response" calcolando e cantando l'intervallo richiesto.
   - **Attività Lineari:** Studio dei pattern continui e del posizionamento orizzontale sul manico (es. muoversi sui set di corde superiori).
 
 ---

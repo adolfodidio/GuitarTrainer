@@ -2,134 +2,114 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Pat Martino Logic - Guitar Trainer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .tab-btn { transition: all 0.2s ease-in-out; }
-        .tab-btn.active {
-            background-color: #6366f1; /* indigo-500 */
-            color: white;
-            border-color: #6366f1;
-        }
-        .dim-node {
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-        .dim-node:hover {
-            transform: scale(1.1);
-        }
-        .dim-node.lowered {
-            background-color: #ef4444; /* red-500 */
-            color: white;
-            border-color: #ef4444;
-        }
-    </style>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/pat-martino.css">
 </head>
-<body class="bg-gray-900 text-white min-h-screen flex flex-col p-4 sm:p-6">
+<body>
     
-    <div class="max-w-4xl w-full mx-auto">
+    <div class="pm-container">
         <!-- Header & Nav -->
-        <div class="mb-8">
-            <a href="index.html" class="text-gray-400 hover:text-indigo-400 transition-colors text-sm sm:text-base flex items-center gap-2 mb-4">
+        <div class="pm-header">
+            <a href="index.html" class="pm-link-btn" style="display:inline-flex; align-items:center; gap:0.5rem; margin-bottom:1rem; text-decoration:none;">
                 <span>&larr;</span> Torna al menu
             </a>
-            <h1 class="text-3xl sm:text-4xl font-bold text-indigo-400 mb-2">Pat Martino Logic</h1>
-            <p class="text-gray-400 text-sm sm:text-base">Esplora la chitarra attraverso la lente della geometria simmetrica e della Minor Conversion.</p>
+            <h1 class="pm-title">Pat Martino Logic</h1>
+            <p class="pm-subtitle">Esplora la chitarra attraverso la lente della geometria simmetrica e della Minor Conversion.</p>
         </div>
 
         <!-- Tabs -->
-        <div class="flex flex-wrap gap-2 mb-8 border-b border-gray-700 pb-4">
-            <button class="tab-btn active px-4 py-2 rounded-lg border border-gray-700 text-gray-300 font-semibold" onclick="switchTab('minor-conv', this)">Minor Conversion</button>
-            <button class="tab-btn px-4 py-2 rounded-lg border border-gray-700 text-gray-300 font-semibold" onclick="switchTab('geometry', this)">Geometria Parentale</button>
-            <button class="tab-btn px-4 py-2 rounded-lg border border-gray-700 text-gray-300 font-semibold" onclick="switchTab('linear', this)">Attività Lineari</button>
+        <div class="pm-tabs-nav">
+            <button class="pm-tab-btn active" onclick="switchTab('minor-conv', this)">Minor Conversion</button>
+            <button class="pm-tab-btn" onclick="switchTab('geometry', this)">Geometria Parentale</button>
+            <button class="pm-tab-btn" onclick="switchTab('linear', this)">Attività Lineari</button>
         </div>
 
         <!-- TAB 1: Minor Conversion -->
-        <div id="tab-minor-conv" class="tab-content">
-            <div class="bg-gray-800 p-6 rounded-2xl shadow-xl border border-gray-700">
-                <h2 class="text-2xl font-bold mb-4 text-white">Minor Conversion Trainer</h2>
-                <p class="text-gray-400 mb-6 text-sm">
+        <div id="tab-minor-conv" class="pm-tab-content active">
+            <div class="pm-card">
+                <h2 class="pm-card-title">Minor Conversion Trainer</h2>
+                <p class="pm-card-text">
                     Nel sistema di Martino, l'accordo Minore 7 è il master. 
-                    <br>&bull; Un accordo <span class="text-indigo-400 font-bold">Dominante (V7)</span> si suona come il <span class="text-indigo-400 font-bold">Minore 7 sul II grado</span> (es. G7 &rarr; Dm7).
-                    <br>&bull; Un accordo <span class="text-indigo-400 font-bold">Maggiore (Imaj7)</span> si suona come il <span class="text-indigo-400 font-bold">Minore 7 sul VI grado</span> (es. Cmaj7 &rarr; Am7).
-                    <br>&bull; Un accordo <span class="text-indigo-400 font-bold">Alterato (V7alt)</span> si suona come il <span class="text-indigo-400 font-bold">Minore 7 un semitono sopra</span> (es. G7alt &rarr; Abm7).
+                    <br>&bull; Un accordo <span class="pm-highlight">Dominante (V7)</span> si suona come il <span class="pm-highlight">Minore 7 sul II grado</span> (es. G7 &rarr; Dm7).
+                    <br>&bull; Un accordo <span class="pm-highlight">Maggiore (Imaj7)</span> si suona come il <span class="pm-highlight">Minore 7 sul VI grado</span> (es. Cmaj7 &rarr; Am7).
+                    <br>&bull; Un accordo <span class="pm-highlight">Alterato (V7alt)</span> si suona come il <span class="pm-highlight">Minore 7 un semitono sopra</span> (es. G7alt &rarr; Abm7).
                 </p>
 
-                <div class="flex justify-between items-center bg-gray-900 p-4 rounded-xl border border-gray-700 mb-6">
-                    <div class="text-gray-400">Punteggio: <span id="mc-score" class="text-white font-bold text-xl">0</span></div>
-                    <button onclick="nextMcQuestion()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg font-bold transition">Nuovo Accordo</button>
+                <div class="pm-score-bar">
+                    <div class="pm-score-text">Punteggio: <span id="mc-score" class="pm-score-value">0</span></div>
+                    <button onclick="nextMcQuestion()" class="pm-btn-primary">Nuovo Accordo</button>
                 </div>
 
-                <div class="text-center mb-8">
-                    <p class="text-gray-500 uppercase tracking-widest text-xs font-bold mb-2">Su quale accordo minore pensi per suonare su:</p>
-                    <div id="mc-question" class="text-5xl font-extrabold text-white mb-2">--</div>
+                <div class="pm-question-area">
+                    <p class="pm-question-label">Su quale accordo minore pensi per suonare su:</p>
+                    <div id="mc-question" class="pm-question-display">--</div>
                 </div>
 
-                <div id="mc-options" class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div id="mc-options" class="pm-options-grid">
                     <!-- Opzioni generate da JS -->
                 </div>
                 
-                <div id="mc-feedback" class="mt-6 text-center text-lg font-bold h-8"></div>
+                <div id="mc-feedback" class="pm-feedback"></div>
             </div>
         </div>
 
         <!-- TAB 2: Geometria (Diminished) -->
-        <div id="tab-geometry" class="tab-content hidden">
-            <div class="bg-gray-800 p-6 rounded-2xl shadow-xl border border-gray-700">
-                <h2 class="text-2xl font-bold mb-4 text-white">L'Accordo Genitore (Diminuito 7)</h2>
-                <p class="text-gray-400 mb-6 text-sm">
+        <div id="tab-geometry" class="pm-tab-content">
+            <div class="pm-card">
+                <h2 class="pm-card-title">L'Accordo Genitore (Diminuito 7)</h2>
+                <p class="pm-card-text">
                     Un accordo diminuito 7 divide l'ottava in 4 parti esatte (terze minori). 
                     Abbassando qualsiasi nota dell'accordo di un semitono, si genera un accordo di Dominante 7. 
                     Clicca su una nota per abbassarla e scoprire le 4 dominanti generate da un singolo diminuito.
                 </p>
 
-                <div class="flex flex-col items-center">
-                    <div class="mb-6">
-                        <label class="text-gray-400 text-sm font-bold mr-2">Scegli Diminuito:</label>
-                        <select id="dim-select" onchange="resetDiminished()" class="bg-gray-700 border border-gray-600 rounded p-2 text-white outline-none">
+                <div class="pm-dim-container">
+                    <div class="pm-dim-select-area">
+                        <label for="dim-select">Scegli Diminuito:</label>
+                        <select id="dim-select" onchange="resetDiminished()" class="pm-select">
                             <option value="C">C°7 (C, Eb, Gb, A)</option>
                             <option value="C#">C#°7 (C#, E, G, Bb)</option>
                             <option value="D">D°7 (D, F, Ab, B)</option>
                         </select>
                     </div>
 
-                    <div class="relative w-64 h-64 sm:w-80 sm:h-80 bg-gray-900 rounded-full border-4 border-gray-700 flex items-center justify-center mb-8">
-                        <div class="absolute text-center">
-                            <span class="text-gray-500 text-xs uppercase tracking-widest block mb-1">Accordo Generato</span>
-                            <span id="dim-result" class="text-4xl font-extrabold text-indigo-400">C°7</span>
+                    <div class="pm-dim-circle-area">
+                        <div class="pm-dim-result-area">
+                            <span class="pm-dim-result-label">Accordo Generato</span>
+                            <span id="dim-result" class="pm-dim-result-value">C°7</span>
                         </div>
                         
                         <!-- I 4 Nodi -->
-                        <div id="node-0" onclick="lowerNode(0)" class="dim-node absolute top-0 -mt-6 w-14 h-14 bg-gray-800 border-2 border-indigo-500 rounded-full flex items-center justify-center font-bold text-lg shadow-lg">C</div>
-                        <div id="node-1" onclick="lowerNode(1)" class="dim-node absolute right-0 -mr-6 w-14 h-14 bg-gray-800 border-2 border-indigo-500 rounded-full flex items-center justify-center font-bold text-lg shadow-lg">Eb</div>
-                        <div id="node-2" onclick="lowerNode(2)" class="dim-node absolute bottom-0 -mb-6 w-14 h-14 bg-gray-800 border-2 border-indigo-500 rounded-full flex items-center justify-center font-bold text-lg shadow-lg">Gb</div>
-                        <div id="node-3" onclick="lowerNode(3)" class="dim-node absolute left-0 -ml-6 w-14 h-14 bg-gray-800 border-2 border-indigo-500 rounded-full flex items-center justify-center font-bold text-lg shadow-lg">A</div>
+                        <div id="node-0" onclick="lowerNode(0)" class="dim-node node-top">C</div>
+                        <div id="node-1" onclick="lowerNode(1)" class="dim-node node-right">Eb</div>
+                        <div id="node-2" onclick="lowerNode(2)" class="dim-node node-bottom">Gb</div>
+                        <div id="node-3" onclick="lowerNode(3)" class="dim-node node-left">A</div>
                     </div>
                     
-                    <button onclick="resetDiminished()" class="text-sm text-gray-400 hover:text-white underline">Ripristina Diminuito</button>
+                    <button onclick="resetDiminished()" class="pm-link-btn">Ripristina Diminuito</button>
                 </div>
             </div>
         </div>
 
         <!-- TAB 3: Linear Activity -->
-        <div id="tab-linear" class="tab-content hidden">
-            <div class="bg-gray-800 p-6 rounded-2xl shadow-xl border border-gray-700">
-                <h2 class="text-2xl font-bold mb-4 text-white">Attività Lineari (Le Forme)</h2>
-                <p class="text-gray-400 mb-6 text-sm">
+        <div id="tab-linear" class="pm-tab-content">
+            <div class="pm-card">
+                <h2 class="pm-card-title">Attività Lineari (Le Forme)</h2>
+                <p class="pm-card-text">
                     Invece di pensare a box verticali, il sistema si muove orizzontalmente usando frammenti minori. 
                     Questa attività si concentra sulle corde superiori (Mi, Si, Sol) spostandosi lungo il manico.
                 </p>
 
-                <div class="bg-gray-900 p-6 rounded-xl border border-gray-700">
-                    <h3 class="text-indigo-400 font-bold mb-4">L'Approccio "Continuous" su Dm7</h3>
-                    <p class="text-sm text-gray-300 mb-4">
+                <div class="pm-linear-box">
+                    <h3 class="pm-linear-title">L'Approccio "Continuous" su Dm7</h3>
+                    <p class="pm-linear-desc">
                         Tutto ruota attorno alle forme minori base. Esercitati a suonare arpeggi di Dm7 e Dm9 su due ottave
                         muovendoti orizzontalmente, combinando la conversione per affrontare complessi cambi armonici.
                     </p>
-                    <div class="text-xs font-mono text-gray-500 bg-black p-4 rounded border border-gray-800 overflow-x-auto">
+                    <div class="pm-code-block">
                         <pre>
 e |-----------------10-12-13--|
 B |----------10-13------------|
@@ -139,7 +119,7 @@ A |---------------------------|
 E |---------------------------|
                         </pre>
                     </div>
-                    <p class="text-sm text-gray-400 mt-4 italic">
+                    <p class="pm-quote">
                         "Prendi questa frase minore. Se l'armonia di base è un G7, stai suonando le tensioni 5, 13, b7, 9, 3, 11 di G7."
                     </p>
                 </div>
@@ -147,130 +127,6 @@ E |---------------------------|
         </div>
     </div>
 
-    <script>
-        // --- TAB LOGIC ---
-        function switchTab(tabId, btnEl) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
-            
-            btnEl.classList.add('active');
-            document.getElementById('tab-' + tabId).classList.remove('hidden');
-        }
-
-        // --- MINOR CONVERSION LOGIC ---
-        const notes = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
-        
-        function getIndex(note) { return notes.indexOf(note); }
-        function getNote(index) { return notes[(index % 12 + 12) % 12]; }
-
-        const conversions = [
-            { type: '7', name: 'Dominante', shift: 7 }, // V7 -> II-7 (+7 semitoni, o una quinta giusta)
-            { type: 'maj7', name: 'Maggiore', shift: 9 }, // Imaj7 -> VI-7 (+9 semitoni, o sesta maggiore)
-            { type: '7alt', name: 'Alterato', shift: 1 }  // V7alt -> bVI-7 (mezzotono sopra)
-        ];
-
-        let mcScore = 0;
-        let currentCorrectAns = "";
-
-        function nextMcQuestion() {
-            const root = notes[Math.floor(Math.random() * notes.length)];
-            const conv = conversions[Math.floor(Math.random() * conversions.length)];
-            
-            const targetNote = getNote(getIndex(root) + conv.shift);
-            currentCorrectAns = targetNote + "m7";
-
-            document.getElementById('mc-question').innerText = root + conv.type;
-            document.getElementById('mc-feedback').innerText = "";
-
-            // Generate options
-            let options = [currentCorrectAns];
-            while(options.length < 4) {
-                let rNote = notes[Math.floor(Math.random() * notes.length)] + "m7";
-                if(!options.includes(rNote)) options.push(rNote);
-            }
-            options.sort(() => Math.random() - 0.5);
-
-            const optionsContainer = document.getElementById('mc-options');
-            optionsContainer.innerHTML = '';
-            options.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.className = "bg-gray-700 hover:bg-gray-600 text-white font-bold py-4 rounded-xl border border-gray-600 transition";
-                btn.innerText = opt;
-                btn.onclick = () => checkMcAnswer(opt, btn);
-                optionsContainer.appendChild(btn);
-            });
-        }
-
-        function checkMcAnswer(selected, btnEl) {
-            const feedback = document.getElementById('mc-feedback');
-            const buttons = document.querySelectorAll('#mc-options button');
-            buttons.forEach(b => b.disabled = true);
-
-            if(selected === currentCorrectAns) {
-                mcScore++;
-                document.getElementById('mc-score').innerText = mcScore;
-                feedback.innerHTML = `<span class="text-green-400">Corretto!</span>`;
-                btnEl.classList.add('bg-green-600', 'border-green-500');
-                btnEl.classList.remove('bg-gray-700', 'hover:bg-gray-600');
-                setTimeout(nextMcQuestion, 1200);
-            } else {
-                feedback.innerHTML = `<span class="text-red-400">Sbagliato! La risposta era ${currentCorrectAns}</span>`;
-                btnEl.classList.add('bg-red-600', 'border-red-500');
-                btnEl.classList.remove('bg-gray-700', 'hover:bg-gray-600');
-                buttons.forEach(b => {
-                    if(b.innerText === currentCorrectAns) {
-                        b.classList.add('bg-green-600', 'border-green-500');
-                        b.classList.remove('bg-gray-700', 'hover:bg-gray-600');
-                    }
-                });
-                mcScore = 0;
-                document.getElementById('mc-score').innerText = mcScore;
-                setTimeout(nextMcQuestion, 2500);
-            }
-        }
-
-        // --- GEOMETRY LOGIC ---
-        const dimChords = {
-            "C": { name: "C°7", notes: ["C", "Eb", "Gb", "A"], loweringTo: ["B7", "D7", "F7", "Ab7"], lowerdNotes: ["B", "D", "F", "Ab"] },
-            "C#": { name: "C#°7", notes: ["C#", "E", "G", "Bb"], loweringTo: ["C7", "Eb7", "Gb7", "A7"], lowerdNotes: ["C", "Eb", "Gb", "A"] },
-            "D": { name: "D°7", notes: ["D", "F", "Ab", "B"], loweringTo: ["C#7", "E7", "G7", "Bb7"], lowerdNotes: ["C#", "E", "G", "Bb"] }
-        };
-
-        let currentDim = "C";
-        let loweredIndex = -1;
-
-        function resetDiminished() {
-            currentDim = document.getElementById('dim-select').value;
-            loweredIndex = -1;
-            document.getElementById('dim-result').innerText = dimChords[currentDim].name;
-            
-            for(let i=0; i<4; i++) {
-                const node = document.getElementById('node-'+i);
-                node.innerText = dimChords[currentDim].notes[i];
-                node.classList.remove('lowered');
-            }
-        }
-
-        function lowerNode(index) {
-            if(loweredIndex === index) {
-                resetDiminished();
-                return;
-            }
-            
-            resetDiminished(); // reset colors
-            loweredIndex = index;
-            
-            const node = document.getElementById('node-'+index);
-            node.innerText = dimChords[currentDim].lowerdNotes[index];
-            node.classList.add('lowered');
-            
-            document.getElementById('dim-result').innerText = dimChords[currentDim].loweringTo[index];
-        }
-
-        // Init
-        nextMcQuestion();
-        resetDiminished();
-
-    </script>
+    <script src="js/modules/pat-martino.js"></script>
 </body>
 </html>

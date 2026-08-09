@@ -1,0 +1,802 @@
+// js/modules/barry-harris.js
+const BarryHarrisApp = {
+    ...BarryHarrisData,
+
+    // --- Stato dell'Applicazione ---
+    audioCtx: null,
+    micStream: null,
+    micAnalyser: null,
+    currentRoom: 1,
+    noiseBuffer: null,
+    settings: {
+        key: 'C',
+        scaleType: 'major6',
+        stringSet: 'top',
+        bpm: 100
+    },
+    
+    // --- Stato delle Stanze ---
+    metronome: {
+        isOn: false,
+        interval: null,
+        nextNoteTime: 0.0,
+        currentBeat: 0,
+        lookahead: 25.0,
+        scheduleAheadTime: 0.1,
+        lastAttackTime: 0
+    },
+    singing: {
+        isActive: false,
+        notes: [],
+        currentIndex: 0,
+        wrongCounter: 0,
+        lastNote: -1
+    },
+
+    // --- Metodi Principali ---
+    init: function() {
+        this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        const bufferSize = this.audioCtx.sampleRate * 0.2;
+        this.noiseBuffer = this.audioCtx.createBuffer(1, bufferSize, this.audioCtx.sampleRate);
+        const output = this.noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+        }
+
+        const dimSelect = document.getElementById('dimSelect');
+        this.NOTES_FLAT.forEach(n => {
+            const opt = document.createElement('option');
+            opt.value = n;
+            opt.innerText = n;
+            dimSelect.appendChild(opt);
+        });
+        dimSelect.value = "C";
+
+        this.populateLicks();
+
+        document.getElementById('keySelect').addEventListener('change', (e) => {
+            this.settings.key = e.target.value;
+            if (this.currentRoom === 1) this.renderScale();
+            if (this.currentRoom === 4) this.startSingingGame();
+        });
+        document.getElementById('scaleType').addEventListener('change', (e) => {
+            this.settings.scaleType = e.target.value;
+            if (this.currentRoom === 1) this.renderScale();
+            if (this.currentRoom === 4) this.startSingingGame();
+        });
+        document.getElementById('stringSet').addEventListener('change', (e) => {
+            this.settings.stringSet = e.target.value;
+            if (this.currentRoom === 1) this.renderScale();
+            if (this.currentRoom === 2) this.renderFamily();
+            if (this.currentRoom === 5) this.displayLick();
+        });
+        document.getElementById('harmonizationStringSet').addEventListener('change', () => {
+            if (this.currentRoom === 6) this.renderMajorScaleHarmonization();
+        });
+        document.getElementById('harmonizationKeySelect').addEventListener('change', () => {
+            if (this.currentRoom === 6) this.renderMajorScaleHarmonization();
+        });
+
+        this.drawFretboardGrid();
+        this.renderScale();
+        this.openRoom(1);
+    },
+
+    openRoom: function(roomId) {
+        this.stopAllActivities();
+
+        if (this.micStream && ![3, 4].includes(roomId)) {
+            this.micStream.getTracks().forEach(track => track.stop());
+            this.micStream = null;
+            this.micAnalyser = null;
+        }
+
+        this.currentRoom = roomId;
+
+        document.querySelectorAll('.room-section').forEach(el => el.classList.remove('visible'));
+        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById(`room-${roomId}`).classList.add('visible');
+        document.getElementById(`btn-room-${roomId}`).classList.add('active');
+
+        if (roomId === 1) {
+            this.renderScale();
+        } else if (roomId === 2) {
+            this.renderFamily();
+        } else if (roomId === 5) {
+            this.displayLick();
+        } else if (roomId === 6) {
+            this.renderMajorScaleHarmonization();
+        }
+    },
+
+    stopAllActivities: function() {
+        if (this.metronome.isOn) {
+            this.toggleMetronome();
+        }
+        this.singing.isActive = false;
+    },
+
+    // --- Metodi Helper ---
+    getNoteName: function(midiIndex, useSharps) {
+        const normalized = (midiIndex % 12 + 12) % 12;
+        return useSharps ? this.NOTES_SHARP[normalized] : this.NOTES_FLAT[normalized];
+    },
+
+    calculateChordIntervals: function(tab, rootNoteIndex, stringSetKey) {
+        const intervalNames = ['1', 'b2', '2', 'b3', '3', '4', 'b5', '5', 'b6', '6', 'b7', '7'];
+        const currentSet = this.STRING_SETS[stringSetKey];
+        
+        return tab.map((fret, i) => {
+            if (fret === null || fret === undefined) return '';
+            const noteMidi = currentSet.midiBase[i] + fret;
+            const intervalValue = (noteMidi - rootNoteIndex + 12) % 12;
+            return intervalNames[intervalValue];
+        });
+    },
+
+    noteFromPitch: function(frequency) {
+        const noteNum = 12 * (Math.log(frequency / 440) / Math.log(2));
+        return Math.round(noteNum) + 69;
+    },
+
+    autoCorrelate: function(buf, sampleRate) {
+        let SIZE = buf.length;
+        let rms = 0;
+        for (let i = 0; i < SIZE; i++) { rms += buf[i] * buf[i]; }
+        rms = Math.sqrt(rms / SIZE);
+        if (rms < 0.01) return -1;
+
+        let r1 = 0, r2 = SIZE - 1, thres = 0.2;
+        for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
+        for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
+        buf = buf.slice(r1, r2);
+        SIZE = buf.length;
+        let c = new Array(SIZE).fill(0);
+        for (let i = 0; i < SIZE; i++) 
+            for (let j = 0; j < SIZE - i; j++)
+                c[i] = c[i] + buf[j] * buf[j + i];
+
+        let d = 0; while (c[d] > c[d + 1]) d++;
+        let maxval = -1, maxpos = -1;
+        for (let i = d; i < SIZE; i++) {
+            if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
+        }
+        let T0 = maxpos;
+        let x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
+        let a = (x1 + x3 - 2 * x2) / 2;
+        let b = (x3 - x1) / 2;
+        if (a) T0 = T0 - b / (2 * a);
+        return sampleRate / T0;
+    },
+
+    // --- Metodi Audio ---
+    playChord: function(chord, stringSetKey) {
+        if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+
+        const currentSet = this.STRING_SETS[stringSetKey];
+        const baseMidi = currentSet.midiBase;
+        const now = this.audioCtx.currentTime;
+
+        chord.tab.forEach((fret, index) => {
+            const midi = baseMidi[index] + fret;
+            const freq = 440 * Math.pow(2, (midi - 69) / 12);
+
+            const osc = this.audioCtx.createOscillator();
+            const gain = this.audioCtx.createGain();
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now);
+
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(0.1, now + 0.05); 
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 2.0);
+
+            osc.connect(gain);
+            gain.connect(this.audioCtx.destination);
+
+            osc.start(now);
+            osc.stop(now + 2.0);
+        });
+    },
+
+    playSingleMidiNote: function(midi, time, duration) {
+        const freq = 440 * Math.pow(2, (midi - 69) / 12);
+        const osc = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, time);
+        gain.gain.setValueAtTime(0.2, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+        osc.connect(gain);
+        gain.connect(this.audioCtx.destination);
+        osc.start(time);
+        osc.stop(time + duration);
+    },
+
+    // --- Metodi UI ---
+    drawFretboardGrid: function() {
+        const visualizer = document.getElementById('tab-visualizer');
+        if(visualizer.querySelector('.fret-number')) return;
+
+        for (let i = 0; i <= this.MAX_FRETS; i++) {
+            const fretLineLeft = (i / this.MAX_FRETS) * 100;
+
+            if (i > 0) {
+                const line = document.createElement('div');
+                line.className = 'fret-line';
+                line.style.left = `${fretLineLeft}%`;
+                visualizer.appendChild(line);
+            }
+            
+            const numLeft = (i > 0) ? ((i - 0.5) / this.MAX_FRETS) * 100 : 0;
+            const num = document.createElement('div');
+            num.className = 'fret-number';
+            num.innerText = i;
+            num.style.left = `${numLeft}%`;
+            visualizer.appendChild(num);
+        }
+    },
+
+    showTab: function(chord, stringSetKey, highlightNotes = []) {
+        const currentSet = this.STRING_SETS[stringSetKey];
+        document.getElementById('tab-instruction').innerText = `Visualizzando: ${chord.name} (${currentSet.name})`;
+        
+        const allStrings = ['string-e', 'string-b', 'string-g', 'string-d', 'string-a', 'string-E'];
+        allStrings.forEach(id => document.getElementById(id).innerHTML = '');
+
+        const activeStrings = currentSet.strings;
+        chord.tab.forEach((fret, index) => {
+            const stringDiv = document.getElementById(activeStrings[index]);
+            const noteDiv = document.createElement('div');
+            noteDiv.className = 'tab-note'; 
+            noteDiv.innerText = chord.intervals ? chord.intervals[index] : fret;
+            if (highlightNotes.includes(index)) {
+                noteDiv.classList.add('playing');
+            }
+            
+            let leftPos = ((fret - 0.5) / this.MAX_FRETS) * 100; 
+            noteDiv.style.left = leftPos + '%';
+            
+            stringDiv.appendChild(noteDiv);
+        });
+    },
+
+    // --- STANZA 1: LOGIC ENGINE ---
+    generateChords: function(rootName, scaleType) {
+        let rootIndex = this.NOTES_FLAT.indexOf(rootName);
+        if (rootIndex === -1) rootIndex = this.NOTES_SHARP.indexOf(rootName);
+        
+        const currentSet = this.STRING_SETS[this.settings.stringSet];
+        const useSharps = ['G', 'D', 'A', 'E', 'B', 'F#', 'C#'].includes(rootName);
+        const intervals = this.INTERVALS[scaleType];
+        const shapes = this.REF_SHAPES[scaleType];
+        
+        return shapes.map((shape, step) => {
+            const scaleNoteIndex = rootIndex + intervals[step];
+            const scaleNoteName = this.getNoteName(scaleNoteIndex, useSharps);
+            
+            let name = "";
+            if (shape.type === 'tonic') {
+                const rootStr = this.getNoteName(rootIndex, useSharps);
+                name = (step === 0 || step === 8) ? `${rootStr}${shape.suffix}` : `${rootStr}${shape.suffix}/${scaleNoteName}`;
+            } else {
+                name = `${scaleNoteName}${shape.suffix}`;
+            }
+            
+            const indices = (shape.type === 'tonic') ? [0, 2, 4, 6] : [1, 3, 5, 7];
+            const notesList = indices.map(i => this.getNoteName(rootIndex + intervals[i], useSharps)).join('-');
+            
+            const chosenTab = shape.tabs[0];
+            const shapeWithSetOffset = chosenTab.map((f, i) => f + currentSet.offsets[i]);
+            let shift = rootIndex;                    
+            const maxFretInShape = Math.max(...shapeWithSetOffset);
+            if (maxFretInShape + shift > this.MAX_FRETS - 1) shift -= 12;
+            
+            const tab = shapeWithSetOffset.map(f => f + shift);
+            
+            let chordRootNoteIndex = (shape.type === 'tonic') ? rootIndex : scaleNoteIndex;
+            const intervalsArray = this.calculateChordIntervals(tab, chordRootNoteIndex, this.settings.stringSet);
+
+            return { name, type: shape.type, notes: notesList, tab, intervals: intervalsArray };
+        });
+    },
+
+    renderScale: function() {
+        const container = document.getElementById('scaleGrid');
+        container.innerHTML = '';
+        
+        const chords = this.generateChords(this.settings.key, this.settings.scaleType);
+
+        chords.forEach((chord) => {
+            const card = this.createGenericCard(chord);
+            card.onclick = () => {
+                this.showTab(chord, this.settings.stringSet);
+                this.playChord(chord, this.settings.stringSet);
+            };
+            container.appendChild(card);
+        });
+    },
+
+    playScale: async function() {
+        this.renderScale();
+        const chords = this.generateChords(this.settings.key, this.settings.scaleType);
+        const cards = document.querySelectorAll('#scaleGrid .chord-card');
+
+        for (let i = 0; i < chords.length; i++) {
+            const chord = chords[i];
+            const card = cards[i];
+
+            if (card) {
+                card.style.transform = "translateY(-10px)";
+                card.style.borderColor = "#fff";
+            }
+            
+            this.showTab(chord, this.settings.stringSet);
+            this.playChord(chord, this.settings.stringSet);
+
+            await new Promise(r => setTimeout(r, 800));
+
+            if (card) {
+                card.style.transform = "";
+                card.style.borderColor = "";
+            }
+        }
+    },
+
+    createGenericCard: function(chord) {
+        const card = document.createElement('div');
+        card.className = `chord-card type-${chord.type}`;
+        card.innerHTML = `
+            <span class="chord-func">${chord.type === 'tonic' ? 'Home' : 'Tension'}</span>
+            <span class="chord-name">${chord.name}</span>
+            <div class="chord-notes">${chord.notes}</div>
+        `;
+        return card;
+    },
+
+    // --- STANZA 2: FAMILY FINDER ---
+    renderFamily: function() {
+        const parentName = document.getElementById('dimSelect').value;
+        const container = document.getElementById('familyGrid');
+        container.innerHTML = '';
+
+        let rootIndex = this.NOTES_FLAT.indexOf(parentName);
+        if (rootIndex === -1) rootIndex = this.NOTES_SHARP.indexOf(parentName);
+        
+        let shift = rootIndex - 2; 
+        const currentSet = this.STRING_SETS[this.settings.stringSet];
+        const baseShape = [7,6,7,6]; 
+        let parentTab = baseShape.map((f, i) => f + currentSet.offsets[i] + shift); 
+
+        if (Math.max(...parentTab) > this.MAX_FRETS - 4) parentTab = parentTab.map(f => f - 12);
+        if (Math.min(...parentTab) < 0) parentTab = parentTab.map(f => f + 12);
+
+        const parentIntervals = this.calculateChordIntervals(parentTab, rootIndex, this.settings.stringSet);
+        const parentChord = { name: parentName + "dim7", type: 'dim', notes: "Parent", tab: parentTab, intervals: parentIntervals };
+        this.createFamilyCard(parentChord, container, true);
+
+        for(let i=0; i<4; i++) {
+            const childTab = [...parentTab];
+            childTab[i] = childTab[i] - 1;
+
+            const childChordRootMidi = this.STRING_SETS[this.settings.stringSet].midiBase[i] + childTab[i];
+            const childChordRootIndex = childChordRootMidi % 12;
+            const stringMidiBase = currentSet.midiBase[i];
+            const noteName = this.getNoteName(childChordRootMidi, true);
+            
+            const childIntervals = this.calculateChordIntervals(childTab, childChordRootIndex, this.settings.stringSet);
+            const childChord = { name: noteName + "7", type: 'tonic', notes: `String ${i+1} lowered`, tab: childTab, intervals: childIntervals };
+            this.createFamilyCard(childChord, container, false);
+        }
+    },
+
+    createFamilyCard: function(chord, container, isParent) {
+        const card = document.createElement('div');
+        card.className = `chord-card ${isParent ? 'type-dim parent-card' : 'type-tonic'}`;
+        
+        card.innerHTML = `
+            <span class="chord-func">${isParent ? 'PARENT' : 'CHILD'}</span>
+            <span class="chord-name">${chord.name}</span>
+            <div class="chord-notes">${chord.notes}</div>
+        `;
+        card.onclick = () => { this.showTab(chord, this.settings.stringSet); this.playChord(chord, this.settings.stringSet); };
+        container.appendChild(card);
+    },
+
+    // --- STANZA 6: ARMONIZZAZIONE ---
+    renderMajorScaleHarmonization: function() {
+        const container = document.getElementById('harmonizationGrid');
+        container.innerHTML = '';
+        const selectedSet = document.getElementById('harmonizationStringSet').value;
+        const selectedKey = document.getElementById('harmonizationKeySelect').value;
+
+        const transposedChords = this.getTransposedHarmonization(selectedKey, selectedSet);
+
+        transposedChords.forEach(chordObject => {
+            const card = document.createElement('div');
+            card.className = `chord-card`;
+            card.classList.add('theme-harmony');
+            card.innerHTML = `
+                <span class="chord-func">${chordObject.degree}</span>
+                <span class="chord-name">${chordObject.name}</span>
+                <div class="chord-notes">${chordObject.notes}</div>
+            `;
+            card.onclick = () => {
+                this.showTab(chordObject, selectedSet);
+                this.playChord(chordObject, selectedSet);
+            };
+            container.appendChild(card);
+        });
+
+        document.getElementById('tab-instruction').innerText = 'Clicca su un accordo sopra per vederlo qui.';
+    },
+
+    getTransposedHarmonization: function(key, stringSet) {
+        const transposeShift = this.NOTES_FLAT.indexOf(key);
+        if (transposeShift === -1) return [];
+        
+        const useSharps = ['G', 'D', 'A', 'E', 'B', 'F#', 'C#'].includes(key);
+        const majorScaleIntervals = [0, 2, 4, 5, 7, 9, 11, 12];
+
+        return this.MAJOR_SCALE_HARMONIZATION.map((chordData, index) => {
+            const originalTab = chordData.tabs[stringSet];
+            if (!originalTab) return null;
+
+            const tab = originalTab.map(f => f + transposeShift);
+
+            if (Math.max(...tab) > this.MAX_FRETS) {
+                for (let i = 0; i < tab.length; i++) { tab[i] -= 12; }
+            }
+
+            const degreeRootNoteIndex = (transposeShift + majorScaleIntervals[index]) % 12;
+            const degreeRootNoteName = this.getNoteName(degreeRootNoteIndex, useSharps);
+            const newName = degreeRootNoteName + chordData.name.replace(/^[A-G][#b]?/, '');
+
+            const originalNotes = chordData.notes.split('-');
+            const newNotes = originalNotes.map(note => {
+                const originalNoteIndex = this.NOTES_FLAT.indexOf(note);
+                const newNoteIndex = (originalNoteIndex + transposeShift) % 12;
+                return this.getNoteName(newNoteIndex, useSharps);
+            }).join('-');
+            
+            const intervals = this.calculateChordIntervals(tab, degreeRootNoteIndex, stringSet);
+
+            return {
+                degree: chordData.degree,
+                name: newName,
+                notes: newNotes,
+                tab: tab,
+                intervals: intervals
+            };
+        }).filter(c => c !== null);
+    },
+
+    playHarmonizationSequence: async function() {
+        const selectedSet = document.getElementById('harmonizationStringSet').value;
+        const selectedKey = document.getElementById('harmonizationKeySelect').value;
+        const transposedChords = this.getTransposedHarmonization(selectedKey, selectedSet);
+        const cards = document.querySelectorAll('#harmonizationGrid .chord-card');
+
+        for (let i = 0; i < transposedChords.length; i++) {
+            const chordObject = transposedChords[i];
+            const card = cards[i];
+
+            if (card) {
+                card.style.transform = "translateY(-5px)";
+                card.style.boxShadow = "0 0 15px #00BCD4";
+            }
+
+            this.showTab(chordObject, selectedSet);
+            this.playChord(chordObject, selectedSet);
+
+            await new Promise(r => setTimeout(r, 800));
+
+            if (card) { card.style.transform = ""; card.style.boxShadow = ""; }
+        }
+    },
+
+    // --- STANZA 3: RHYTHM BOSS ---
+    updateBpm: function(val) {
+        this.settings.bpm = val;
+        document.getElementById('bpmDisplay').innerText = val;
+    },
+
+    toggleMetronome: async function() {
+        const btn = document.getElementById('btnMetronome');
+        
+        if (this.metronome.isOn) {
+            this.metronome.isOn = false;
+            btn.innerText = "START SWING";
+            clearInterval(this.metronome.interval);
+            this.resetVisuals();
+            return;
+        }
+
+        if (this.audioCtx.state === 'suspended') await this.audioCtx.resume();
+
+        try {
+            if (!this.micStream) {
+                this.micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const source = this.audioCtx.createMediaStreamSource(this.micStream);
+                this.micAnalyser = this.audioCtx.createAnalyser();
+                this.micAnalyser.fftSize = 512;
+                source.connect(this.micAnalyser);
+            }
+        } catch (e) {
+            alert("Microfono necessario per rilevare gli errori ritmici!");
+        }
+
+        this.metronome.isOn = true;
+        btn.innerText = "STOP";
+        this.metronome.currentBeat = 0;
+        this.metronome.nextNoteTime = this.audioCtx.currentTime + 0.1;
+        this.metronome.interval = setInterval(() => this.scheduler(), this.metronome.lookahead);
+        
+        this.detectRhythmError();
+    },
+
+    scheduler: function() {
+        while (this.metronome.nextNoteTime < this.audioCtx.currentTime + this.metronome.scheduleAheadTime) {
+            this.scheduleNote(this.metronome.currentBeat, this.metronome.nextNoteTime);
+            this.nextNote();
+        }
+    },
+
+    scheduleNote: function(beatNumber, time) {
+        if (beatNumber === 1 || beatNumber === 3) {
+            this.playHiHat(time);
+        }
+        const delay = (time - this.audioCtx.currentTime) * 1000;
+        setTimeout(() => this.updateVisualBeat(beatNumber), delay);
+    },
+
+    nextNote: function() {
+        const secondsPerBeat = 60.0 / this.settings.bpm;
+        this.metronome.nextNoteTime += secondsPerBeat;
+        this.metronome.currentBeat = (this.metronome.currentBeat + 1) % 4;
+    },
+
+    playHiHat: function(time) {
+        const noise = this.audioCtx.createBufferSource();
+        noise.buffer = this.noiseBuffer;
+
+        const filter = this.audioCtx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1500, time);
+        filter.Q.value = 10;
+
+        const gain = this.audioCtx.createGain();
+        gain.gain.setValueAtTime(0, time);
+        gain.gain.linearRampToValueAtTime(0.7, time + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.audioCtx.destination);
+        noise.start(time);
+        noise.stop(time + 0.1);
+    },
+
+    updateVisualBeat: function(beat) {
+        for(let i=1; i<=4; i++) document.getElementById(`beat-${i}`).classList.remove('beat-active');
+        if (beat === 1 || beat === 3) { 
+            document.getElementById(`beat-${beat+1}`).classList.add('beat-active');
+        }
+    },
+    
+    resetVisuals: function() {
+        for(let i=1; i<=4; i++) document.getElementById(`beat-${i}`).classList.remove('beat-active');
+    },
+
+    detectRhythmError: function() {
+        if (!this.metronome.isOn || !this.micAnalyser) return;
+
+        const buffer = new Float32Array(this.micAnalyser.fftSize);
+        this.micAnalyser.getFloatTimeDomainData(buffer);
+        
+        let sum = 0;
+        for (let i = 0; i < buffer.length; i++) sum += buffer[i] * buffer[i];
+        const rms = Math.sqrt(sum / buffer.length);
+
+        if (rms > 0.05) { 
+            const now = this.audioCtx.currentTime;
+            if (now - this.metronome.lastAttackTime > 0.2) { 
+                this.metronome.lastAttackTime = now;
+                const secondsPerBeat = 60.0 / this.settings.bpm;
+                let actualBeatIndex = (this.metronome.currentBeat - 1 + 4) % 4; 
+
+                if (now > this.metronome.nextNoteTime - (secondsPerBeat * 0.3)) {
+                    actualBeatIndex = this.metronome.currentBeat;
+                }
+
+                if (actualBeatIndex === 0 || actualBeatIndex === 2) {
+                    this.triggerError();
+                }
+            }
+        }
+        requestAnimationFrame(() => this.detectRhythmError());
+    },
+
+    triggerError: function() {
+        document.body.classList.add('flash-error');
+        setTimeout(() => document.body.classList.remove('flash-error'), 400);
+    },
+
+    // --- STANZA 4: SING IT ---
+    startSingingGame: function() {
+        if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+
+        let rootIndex = this.NOTES_FLAT.indexOf(this.settings.key);
+        if (rootIndex === -1) rootIndex = this.NOTES_SHARP.indexOf(this.settings.key);
+        
+        const scaleIntervals = this.INTERVALS[this.settings.scaleType];
+        this.singing.notes = scaleIntervals.map(i => (rootIndex + i) % 12);
+        this.singing.currentIndex = 0;
+        this.singing.wrongCounter = 0;
+        this.singing.isActive = true;
+
+        const container = document.getElementById('singing-container');
+        container.innerHTML = '';
+        this.singing.notes.forEach((noteIdx, i) => {
+            const noteName = this.getNoteName(noteIdx, false);
+            const el = document.createElement('div');
+            el.className = 'sing-note';
+            el.id = `sing-note-${i}`;
+            el.innerText = noteName;
+            container.appendChild(el);
+        });
+        this.updateSingingUI();
+
+        this.initMicForSinging();
+    },
+
+    initMicForSinging: async function() {
+        try {
+            if(!this.micStream) {
+                this.micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const source = this.audioCtx.createMediaStreamSource(this.micStream);
+                this.micAnalyser = this.audioCtx.createAnalyser();
+                this.micAnalyser.fftSize = 2048;
+                source.connect(this.micAnalyser);
+            }
+            this.detectPitchLoop();
+        } catch (e) {
+            alert("Microfono necessario per cantare!");
+        }
+    },
+
+    detectPitchLoop: function() {
+        if (!this.singing.isActive) return;
+
+        const buf = new Float32Array(this.micAnalyser.fftSize);
+        this.micAnalyser.getFloatTimeDomainData(buf);
+        const freq = this.autoCorrelate(buf, this.audioCtx.sampleRate);
+
+        const feedbackEl = document.getElementById('singing-feedback');
+        const errorPopup = document.getElementById('singing-error-msg');
+
+        if (freq !== -1) {
+            const midiNum = this.noteFromPitch(freq);
+            const noteIdx = midiNum % 12;
+            const noteName = this.getNoteName(noteIdx, false);
+            
+            feedbackEl.innerText = `Detected: ${noteName}`;
+
+            const targetNote = this.singing.notes[this.singing.currentIndex];
+            
+            if (noteIdx === targetNote) {
+                this.singing.wrongCounter = 0;
+                errorPopup.classList.remove('visible');
+                
+                this.singing.currentIndex++;
+                if (this.singing.currentIndex >= this.singing.notes.length) {
+                    feedbackEl.innerText = "SCALA COMPLETATA! YEAH!";
+                    this.singing.isActive = false;
+                    this.updateSingingUI();
+                    return;
+                }
+                this.updateSingingUI();
+            } else {
+                if (this.singing.lastNote === noteIdx) {
+                    this.singing.wrongCounter++;
+                } else {
+                    this.singing.wrongCounter = 0;
+                }
+                this.singing.lastNote = noteIdx;
+
+                if (this.singing.wrongCounter > 30) {
+                    errorPopup.classList.add('visible');
+                }
+            }
+        } else {
+            this.singing.wrongCounter = 0;
+            errorPopup.classList.remove('visible');
+        }
+
+        requestAnimationFrame(() => this.detectPitchLoop());
+    },
+
+    updateSingingUI: function() {
+        this.singing.notes.forEach((_, i) => {
+            const el = document.getElementById(`sing-note-${i}`);
+            el.classList.remove('active', 'success');
+            if (i < this.singing.currentIndex) el.classList.add('success');
+            if (i === this.singing.currentIndex) el.classList.add('active');
+        });
+    },
+
+    // --- STANZA 5: LICK LIBRARY ---
+    populateLicks: function() {
+        const select = document.getElementById('lickSelect');
+        select.innerHTML = '';
+        for (const key in this.LICK_LIBRARY) {
+            const lick = this.LICK_LIBRARY[key];
+            const opt = document.createElement('option');
+            opt.value = key;
+            opt.innerText = lick.name;
+            select.appendChild(opt);
+        }
+    },
+
+    displayLick: function() {
+        const lickKey = document.getElementById('lickSelect').value;
+        const lick = this.LICK_LIBRARY[lickKey];
+        if (!lick) return;
+
+        document.getElementById('lickName').innerText = lick.name;
+        document.getElementById('lickDescription').innerText = lick.description;
+
+        const allStrings = ['string-e', 'string-b', 'string-g', 'string-d', 'string-a', 'string-E'];
+        allStrings.forEach(id => document.getElementById(id).innerHTML = '');
+        
+        this.settings.stringSet = lick.stringSet;
+        document.getElementById('stringSet').value = lick.stringSet;
+        const currentSet = this.STRING_SETS[lick.stringSet];
+
+        document.getElementById('tab-instruction').innerText = `Visualizzando: ${lick.name} (${currentSet.name})`;
+
+        lick.sequence.forEach((note, index) => {
+            const stringId = currentSet.strings[note.stringIndex];
+            const stringDiv = document.getElementById(stringId);
+            const noteDiv = document.createElement('div');
+            noteDiv.className = 'tab-note';
+            noteDiv.id = `lick-note-${index}`;
+            noteDiv.innerText = index + 1;
+            
+            let leftPos = ((note.fret - 0.5) / this.MAX_FRETS) * 100; 
+            noteDiv.style.left = leftPos + '%';
+            
+            stringDiv.appendChild(noteDiv);
+        });
+    },
+
+    playSelectedLick: async function() {
+        const lickKey = document.getElementById('lickSelect').value;
+        const lick = this.LICK_LIBRARY[lickKey];
+        if (!lick) return;
+
+        if (this.audioCtx.state === 'suspended') await this.audioCtx.resume();
+
+        const noteDuration = 60 / lick.bpm;
+        const currentSet = this.STRING_SETS[lick.stringSet];
+        const startTime = this.audioCtx.currentTime;
+
+        for (let i = 0; i < lick.sequence.length; i++) {
+            const note = lick.sequence[i];
+            const playTime = startTime + i * noteDuration;
+
+            const midi = currentSet.midiBase[note.stringIndex] + note.fret;
+            this.playSingleMidiNote(midi, playTime, noteDuration * 0.9);
+
+            const noteDiv = document.getElementById(`lick-note-${i}`);
+            setTimeout(() => { if (noteDiv) noteDiv.classList.add('playing'); }, i * noteDuration * 1000);
+            setTimeout(() => { if (noteDiv) noteDiv.classList.remove('playing'); }, (i + 0.9) * noteDuration * 1000);
+        }
+    },
+};
+
+window.onload = () => {
+    BarryHarrisApp.init();
+};

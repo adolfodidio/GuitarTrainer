@@ -6,13 +6,13 @@
 - [x] Creazione di questa Roadmap (`docs/ROADMAP.md`)
 - [x] Setup `.gitignore` e `package.json`
 
-## Fase 1: Refactoring Modulare & CSS System (Proposta Attuale)
+## Fase 1: Refactoring Modulare & CSS System (Completata)
 *Obiettivo: Riorganizzare il progetto come previsto dal "Agentic Modular Engineering" isolando stili e logica in piccoli file gestibili per rispettare il Single Responsibility Principle.*
 - `[x]` Creazione del Design System Globale (estrazione dei colori, typography, e CSS condiviso in un `global.css` e variabili CSS).
 - `[x]` Separazione logica JS: estrarre la logica in file `.js` esterni per ogni modulo (es. `fretboard.js`, `intervalli.js`) per decongestionare i file HTML. (Parzialmente completato: `GuitarTrainer` e `TrainerIntervalli` rifattorizzati).
 - `[x]` Consolidamento UI: Assicurare che tutti i moduli condividano una singola navigazione (Header o Sidebar/Menu) e presentino uno stile coeso e premium (glassmorphism, animazioni fluide).
-- `[ ]` Ottimizzazione Mobile: Revisionare le regole di layout mobile per garantire che tutti i moduli seguano il paradigma 100dvh e tap-target generosi.
-- `[ ]` Completare il refactoring di `BarryHarris.html` e `PatMartino.html`.
+- `[x]` Ottimizzazione Mobile: Revisionare le regole di layout mobile per garantire che tutti i moduli seguano il paradigma 100dvh e tap-target generosi.
+- `[x]` Completare il refactoring di `BarryHarris.html` e `PatMartino.html`.
 
 ## Fase 2: Potenziamento Core - Trainer Intervalli & Fretboard
 - [ ] Integrazione completa API Audio (per rilevamento accurato in Fretboard Trainer).
@@ -29,6 +29,13 @@
 - [ ] Micro-animazioni sui feedback (Successo/Errore).
 - [ ] Tematizzazione (Toggle Light/Dark mode universale).
 - [ ] PWA (Progressive Web App): Aggiunta di Service Worker per utilizzo Offline.
+
+## Fase 5: Vocal Intonation Trainer (Completata)
+- [x] Aggiornamento UI e Index per includere il nuovo modulo.
+- [x] Estensione `audio-analyzer.js` con calcolo dei cents e synth drone.
+- [x] Pitch Matching (Accordatore visivo in tempo reale).
+- [x] Canto su Drone (Pedale armonico).
+- [x] Canto dell'Intervallo (Call & Response).
 
 ---
 **Criteri di Accettazione Generali per ogni Fase:**
