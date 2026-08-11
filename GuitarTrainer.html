@@ -17,14 +17,29 @@
         <div id="countdown-text" class="gt-countdown-text"></div>
     </div>
 
-    <a href="index.html" class="gt-back-link">
-        &larr; Torna al menu
-    </a>
-
     <header class="gt-header">
-        <h1 class="gt-title">Fretboard Trainer</h1>
-        <p class="gt-subtitle">Migliora la tua conoscenza della chitarra</p>
+        <a href="index.html" class="gt-back-link">
+            <span>&larr;</span> Menu
+        </a>
+        <h1 class="gt-title">
+            <span>🎸</span> Fretboard Trainer
+        </h1>
     </header>
+
+    <!-- Controlli Microfono Moderni -->
+    <div class="gt-controls" id="session-controls">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">Rilevamento Audio</span>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <button id="btn-start-mic" class="gt-btn-modern gt-btn-primary-modern" onclick="startMic()">
+                <span>🎙️</span> Avvia
+            </button>
+            <button id="btn-stop-mic" class="gt-btn-modern gt-btn-danger-modern hidden-section" onclick="stopMic()">
+                <span>⏹️</span> Ferma
+            </button>
+        </div>
+    </div>
 
     <!-- Pannello Impostazioni -->
     <div id="settings-panel" class="gt-panel">

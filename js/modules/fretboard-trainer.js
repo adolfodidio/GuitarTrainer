@@ -3,6 +3,7 @@ import { NOTES_DISPLAY, STRINGS_DATA, INTERVALS, frequencyFromNoteNumber, getNot
 import { isWaitingForSpeech, speakFeedback, speakAndPlay } from '../utils/speech.js';
 import { initAudio, stopAudio, playTargetNote } from '../utils/audio-analyzer.js';
 
+let isMicInitialized = false;
 let isListening = false;
 let config = {};
 let session = {
@@ -37,6 +38,11 @@ export function startSession() {
         return; 
     }
 
+    if (!isMicInitialized) {
+        alert("Devi prima avviare il microfono (pulsante in alto) per poter giocare!");
+        return;
+    }
+
     config.numTests = parseInt(document.getElementById('numTests').value);
     config.fretStart = parseInt(document.getElementById('fretStart').value);
     config.fretEnd = parseInt(document.getElementById('fretEnd').value);
@@ -50,8 +56,8 @@ export function startSession() {
     const countdownText = document.getElementById('countdown-text');
     countdownOverlay.classList.remove('hidden-section');
 
-    // Pre-inizializza l'audio
-    initAudio(handlePitchUpdate);
+    // L'audio è già stato inizializzato dal pulsante "Avvia Microfono"
+
 
     let count = 5;
 
@@ -360,7 +366,27 @@ function renderSessionLog() {
     logContainer.innerHTML = logHtml;
 }
 
+async function startMic() {
+    const success = await initAudio(handlePitchUpdate);
+    if (success) {
+        isMicInitialized = true;
+        document.getElementById('btn-start-mic').classList.add('hidden-section');
+        document.getElementById('btn-stop-mic').classList.remove('hidden-section');
+    } else {
+        alert("Impossibile accedere al microfono.");
+    }
+}
+
+function stopMic() {
+    stopAudio();
+    isMicInitialized = false;
+    document.getElementById('btn-start-mic').classList.remove('hidden-section');
+    document.getElementById('btn-stop-mic').classList.add('hidden-section');
+}
+
 // Bind to window for HTML onclick attributes
+window.startMic = startMic;
+window.stopMic = stopMic;
 window.startSession = startSession;
 window.finishSession = finishSession;
 

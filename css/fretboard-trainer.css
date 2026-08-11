@@ -2,18 +2,20 @@
 body.gt-body { 
     font-family: 'Inter', sans-serif; 
     overscroll-behavior: none;
-    background-color: #111827; /* gray-900 */
-    color: #ffffff;
+    background-color: #0f172a; /* Slate 900 per uniformità con Vocal/Intervalli */
+    color: #f8fafc;
     min-height: 100dvh;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    padding: 1rem;
-    margin: 0;
+    padding: 0.5rem;
+    max-width: 32rem; /* Limita la larghezza come gli altri moduli */
+    margin: 0 auto; /* Centra nello schermo (global bg) */
+    width: 100%;
+    box-sizing: border-box;
 }
 
 @media (min-width: 640px) {
-    body.gt-body { padding: 1.5rem; }
+    body.gt-body { padding: 1rem; }
 }
 
 /* Animations */
@@ -61,61 +63,99 @@ body.gt-body {
     100% { opacity: 0; }
 }
 
-/* Header & Nav */
-.gt-back-link {
-    position: absolute;
-    top: 1rem;
-    left: 1rem;
-    color: #9ca3af; /* gray-400 */
-    text-decoration: none;
-    font-size: 0.875rem;
-    transition: color 0.2s;
+/* Header & Nav Modern */
+.gt-header { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    gap: 0.5rem; 
+    flex-shrink: 0; 
+    height: 2.25rem; 
+    margin-bottom: 0.5rem; 
+    width: 100%; 
 }
-@media (min-width: 640px) { .gt-back-link { font-size: 1rem; } }
-.gt-back-link:hover { color: #818cf8; /* indigo-400 */ }
+.gt-back-link { 
+    display: flex; 
+    align-items: center; 
+    gap: 0.25rem; 
+    font-size: 0.75rem; 
+    font-weight: 700; 
+    color: #cbd5e1; 
+    padding: 0.375rem 0.75rem; 
+    border-radius: 0.5rem; 
+    background-color: rgba(30, 41, 59, 0.9); 
+    border: 1px solid rgba(51, 65, 85, 0.8); 
+    text-decoration: none; 
+    transition: all 0.2s; 
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); 
+}
+.gt-back-link:hover { color: #818cf8; }
 
-.gt-header {
-    width: 100%;
-    max-width: 28rem; /* max-w-md */
-    margin-bottom: 1.5rem;
-    margin-top: 1rem;
-    text-align: center;
+.gt-title { 
+    font-size: 0.875rem; 
+    font-weight: 800; 
+    color: #818cf8; 
+    margin: 0; 
+    display: flex; 
+    align-items: center; 
+    gap: 0.25rem; 
 }
-.gt-title {
-    font-size: 1.875rem;
-    font-weight: 700;
-    color: #6366f1; /* indigo-500 */
-    margin: 0 0 0.25rem 0;
+
+/* Modern Controls (Microfono) */
+.gt-controls { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 0.5rem; 
+    background-color: rgba(30, 41, 59, 0.9); 
+    border-radius: 0.75rem; 
+    border: 1px solid rgba(51, 65, 85, 0.7); 
+    width: 100%; 
+    margin-bottom: 0.5rem; 
+    flex-shrink: 0;
+    box-sizing: border-box; 
 }
-@media (min-width: 640px) { .gt-title { font-size: 2.25rem; } }
-.gt-subtitle {
-    color: #9ca3af;
-    font-size: 0.875rem;
-    margin: 0;
+.gt-btn-modern { 
+    padding: 0.375rem 0.75rem; 
+    border-radius: 0.5rem; 
+    font-size: 0.75rem; 
+    font-weight: 700; 
+    border: none; 
+    cursor: pointer; 
+    transition: all 0.2s; 
+    display: flex; 
+    align-items: center; 
+    gap: 0.25rem; 
 }
-@media (min-width: 640px) { .gt-subtitle { font-size: 1rem; } }
+.gt-btn-primary-modern { background-color: #6366f1; color: white; }
+.gt-btn-primary-modern:active { transform: scale(0.95); }
+.gt-btn-danger-modern { background-color: #ef4444; color: white; }
+.gt-btn-danger-modern:active { transform: scale(0.95); }
 
 /* Panels */
 .gt-panel {
-    background-color: #1f2937; /* gray-800 */
-    padding: 1.5rem;
+    background-color: rgba(30, 41, 59, 0.95); 
+    padding: 1rem;
     border-radius: 1rem;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     width: 100%;
-    max-width: 28rem;
-    border: 1px solid #374151; /* gray-700 */
+    border: 1px solid rgba(51, 65, 85, 0.8); 
     overflow-y: auto;
-    max-height: 85vh;
+    flex: 1; /* Riempe lo spazio ma fa scrollare i contenuti interni */
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
 }
-@media (min-width: 640px) { .gt-panel { padding: 2rem; } }
+@media (min-width: 640px) { .gt-panel { padding: 1.5rem; } }
 
 .gt-panel-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin: 0 0 1.5rem 0;
-    border-bottom: 1px solid #4b5563; /* gray-600 */
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fbbf24;
+    margin: 0 0 1rem 0;
+    border-bottom: 1px solid #334155; 
     padding-bottom: 0.5rem;
+    flex-shrink: 0;
 }
 
 /* Forms */
@@ -231,20 +271,33 @@ body.gt-body {
 .gt-btn-danger:active { transform: scale(0.98); }
 .gt-btn-danger svg { width: 1.25rem; height: 1.25rem; }
 
+.gt-btn-mic {
+    width: auto;
+    margin-top: 0;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    border-radius: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+}
+
 /* Game Panel */
 .gt-game-container {
     width: 100%;
-    max-width: 28rem;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    flex: 1;
+    overflow: hidden;
 }
 .gt-progress-container {
     width: 100%;
-    background-color: #374151;
+    background-color: #334155;
     border-radius: 9999px;
     height: 0.375rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.5rem;
+    flex-shrink: 0;
 }
 .gt-progress-bar {
     background-color: #6366f1;
@@ -254,18 +307,21 @@ body.gt-body {
     width: var(--progress-width, 0%);
 }
 .gt-game-card {
-    background-color: #1f2937;
-    padding: 1.5rem;
-    border-radius: 1.5rem;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    border: 1px solid #374151;
+    background-color: rgba(30, 41, 59, 0.95);
+    padding: 1rem;
+    border-radius: 1rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(51, 65, 85, 0.8);
     width: 100%;
     text-align: center;
     position: relative;
-    overflow: hidden;
+    overflow-y: auto;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }
-@media (min-width: 640px) { .gt-game-card { padding: 2rem; } }
+@media (min-width: 640px) { .gt-game-card { padding: 1.5rem; } }
 
 .gt-timer {
     position: absolute;

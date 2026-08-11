@@ -18,15 +18,15 @@
         }
     </style>
 </head>
-<body class="text-white min-h-screen flex flex-col items-center justify-center p-6 app-container">
+<body class="text-white min-h-screen flex flex-col items-center justify-start p-6 app-container">
 
-    <div class="app-content w-full items-center justify-center overflow-y-auto">
+    <div class="app-content w-full flex-1 min-h-0 overflow-y-auto">
         <header class="text-center mb-12 mt-8">
             <h1 class="text-4xl sm:text-5xl font-extrabold text-indigo-400 mb-2">Benvenuto</h1>
         <p class="text-lg text-gray-400">Scegli la tua sessione di allenamento</p>
     </header>
 
-    <main class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl w-full">
+    <main class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl w-full mx-auto pb-12">
         <!-- Card per Guitar Trainer -->
         <a href="GuitarTrainer.html" class="app-card bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-700 flex flex-col items-center text-center">
             <div class="mb-4">
@@ -88,10 +88,7 @@
     </footer>
     </div> <!-- close app-content -->
 
-<script type="module">
-    import { initGlobalNav } from './js/components/nav.js';
-    initGlobalNav();
-</script>
+
 
 <script data-goatcounter="https://adolfodidio.goatcounter.com/count"
     async src="https://gc.zgo.at/count.js">

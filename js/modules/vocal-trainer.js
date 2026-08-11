@@ -8,6 +8,18 @@ let currentTargetNote = null;
 let currentTargetFreq = null;
 let currentRootNote = null; // for mode 2 and 3
 
+const VOICE_RANGES = {
+    'default': { min: 48, max: 72 }, // C3 - C5
+    'soprano': { min: 60, max: 84 }, // C4 - C6
+    'mezzo':   { min: 57, max: 81 }, // A3 - A5
+    'alto':    { min: 53, max: 77 }, // F3 - F5
+    'tenor':   { min: 48, max: 72 }, // C3 - C5
+    'baritone':{ min: 43, max: 67 }, // G2 - G4
+    'bass':    { min: 40, max: 64 }  // E2 - E4
+};
+let currentVoiceMin = 48;
+let currentVoiceMax = 72;
+
 const DOM = {
     btnStart: document.getElementById('btn-start'),
     btnStop: document.getElementById('btn-stop'),
@@ -30,6 +42,16 @@ window.playCurrentTarget = playCurrentTarget;
 window.updateDrone = updateDrone;
 window.updateDroneTarget = updateDroneTarget;
 window.generateIntervalChallenge = generateIntervalChallenge;
+
+function updateVoiceRange() {
+    const vt = document.getElementById('voice-type').value;
+    currentVoiceMin = VOICE_RANGES[vt].min;
+    currentVoiceMax = VOICE_RANGES[vt].max;
+    if (currentTab === 1) generateNewPitch();
+    if (currentTab === 2) updateDroneTarget();
+    if (currentTab === 3) generateIntervalChallenge();
+}
+window.updateVoiceRange = updateVoiceRange;
 
 function selectTab(index) {
     currentTab = index;
@@ -139,8 +161,8 @@ function onPitchUpdate(freq, midiNum, noteNameDisplay, cents) {
 
 // Mode 1: Pitch Matching
 function generateNewPitch() {
-    // Generate note between C3 (48) and C5 (72)
-    currentTargetNote = Math.floor(Math.random() * (72 - 48 + 1)) + 48;
+    // Generate note within selected voice range
+    currentTargetNote = Math.floor(Math.random() * (currentVoiceMax - currentVoiceMin + 1)) + currentVoiceMin;
     currentTargetFreq = frequencyFromNoteNumber(currentTargetNote);
     DOM.targetNote.innerText = NOTES_DISPLAY[currentTargetNote % 12];
 }
@@ -176,8 +198,11 @@ function updateDroneTarget() {
     const rootIndex = parseInt(DOM.droneRoot.value);
     const intervalSemitones = parseInt(DOM.droneInterval.value);
     
-    // Choose a comfortable octave, e.g., octave 3 (base 48)
-    currentRootNote = 48 + rootIndex; 
+    // Scegli un'ottava comoda in base al range vocale (circa a metà/basso del range)
+    let midVoice = Math.floor((currentVoiceMin + currentVoiceMax) / 2);
+    let baseC = 12 * Math.floor((midVoice - 6) / 12);
+    currentRootNote = baseC + rootIndex; 
+
     currentTargetNote = currentRootNote + intervalSemitones;
     currentTargetFreq = frequencyFromNoteNumber(currentTargetNote);
 
@@ -199,12 +224,16 @@ function startDronePlay() {
 
 // Mode 3: Intervals Challenge
 function generateIntervalChallenge() {
-    // Random root C3 to G3
-    currentRootNote = Math.floor(Math.random() * 8) + 48; 
-    
     // Random interval (1 to 12)
     const intIndex = Math.floor(Math.random() * 12) + 1; // skip unison
     const interval = INTERVALS[intIndex];
+
+    // Calcola il range disponibile per la radice affinché la nota target sia nel range vocale
+    const minRoot = currentVoiceMin;
+    const maxRoot = currentVoiceMax - interval.semitones;
+
+    // Seleziona la radice casuale all'interno dei limiti
+    currentRootNote = Math.floor(Math.random() * (maxRoot - minRoot + 1)) + minRoot; 
 
     currentTargetNote = currentRootNote + interval.semitones;
     currentTargetFreq = frequencyFromNoteNumber(currentTargetNote);

@@ -27,14 +27,34 @@
 
     <main class="vt-main">
 
-        <!-- Controls (shared across tabs but logic changes) -->
+        <!-- Rilevamento Audio (Mic Controls) -->
         <div class="vt-controls" id="session-controls">
-            <button id="btn-start" class="vt-btn vt-btn-primary" onclick="startMic()">
-                <span>🎙️</span> Avvia Microfono
-            </button>
-            <button id="btn-stop" class="vt-btn vt-btn-danger hidden-section" onclick="stopMic()">
-                <span>⏹️</span> Ferma
-            </button>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">Rilevamento Audio</span>
+            </div>
+            
+            <div style="display: flex; gap: 0.5rem;">
+                <button id="btn-start" class="vt-btn vt-btn-primary" onclick="startMic()">
+                    <span>🎙️</span> Avvia
+                </button>
+                <button id="btn-stop" class="vt-btn vt-btn-danger hidden-section" onclick="stopMic()">
+                    <span>⏹️</span> Ferma
+                </button>
+            </div>
+        </div>
+
+        <!-- Configurazione Registro Vocale -->
+        <div class="vt-controls mt-2" style="justify-content: space-between;">
+            <label for="voice-type" class="vt-label" style="font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">Registro Vocale</label>
+            <select id="voice-type" class="vt-select" style="width: auto; padding: 0.375rem; font-size: 0.75rem;" onchange="updateVoiceRange()">
+                <option value="default">Generico (Do3 - Do5)</option>
+                <option value="soprano">Soprano (Do4 - Do6)</option>
+                <option value="mezzo">Mezzo-Soprano (La3 - La5)</option>
+                <option value="alto">Contralto (Fa3 - Fa5)</option>
+                <option value="tenor">Tenore (Do3 - Do5)</option>
+                <option value="baritone">Baritono (Sol2 - Sol4)</option>
+                <option value="bass">Basso (Mi2 - Mi4)</option>
+            </select>
         </div>
 
         <!-- TUNER CARD (Shared Tuner UI) -->

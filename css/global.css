@@ -41,3 +41,6 @@ html, body {
     background: #334155;
     border-radius: 4px;
 }
+
+/* Utilities */
+.hidden-section { display: none !important; }

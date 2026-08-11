@@ -21,8 +21,9 @@
 - [x] Creazione primo test E2E (`intervalli.spec.js`) per validare il rendering del DOM, l'interazione dei pulsanti e la stabilità del layout Material Design con test passati con successo.
 
 ## Fase 2: Potenziamento Core - Trainer Intervalli & Fretboard
-- [ ] Integrazione completa API Audio (per rilevamento accurato in Fretboard Trainer).
-- [ ] Miglioramento della grafica vettoriale del manico in `TrainerIntervalli.html`.
+- [x] Integrazione completa API Audio (per rilevamento accurato in Fretboard Trainer).
+- [x] Miglioramento della grafica vettoriale del manico in `TrainerIntervalli.html`.
+- [x] Allineamento layout strutturale (`gt-body`, flexbox) per rendere l'interfaccia mobile-perfect e coerente tra Fretboard e Vocal.
 - [ ] Aggiunta modalità "Sfida a Tempo" per l'allenamento degli intervalli.
 - [ ] Implementazione salvataggio statistiche base (via LocalStorage).
 
@@ -42,6 +43,7 @@
 - [x] Pitch Matching (Accordatore visivo in tempo reale).
 - [x] Canto su Drone (Pedale armonico).
 - [x] Canto dell'Intervallo (Call & Response).
+- [x] Supporto personalizzato per estensioni vocali (Soprano, Contralto, Tenore, Baritono, ecc.).
 
 ---
 **Criteri di Accettazione Generali per ogni Fase:**

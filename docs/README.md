@@ -12,6 +12,7 @@ Questa web app è una suite didattica interattiva per l'apprendimento della chit
    - Tastiera interattiva 100% touch con *Tap-to-Remap* immediato della Radice [R], capotasto fisico visibile, note in filigrana e legenda armonica a scomparsa (Toggle).
    - Compendio di teoria rapida (Regola del 9).
 4. **Pat Martino Logic (`PatMartino.html`)**: Minor Conversion, geometria dell'esagramma diminuito e attività lineari.
+5. **Vocal Intonation Trainer (`VocalTrainer.html`)**: Sviluppo dell'orecchio relativo e intonazione vocale. Include pitch matching in tempo reale, canto su drone (pedale) e sfide sugli intervalli, con supporto per vari registri vocali (Soprano, Tenore, Basso, ecc.).
 
 ---
 
