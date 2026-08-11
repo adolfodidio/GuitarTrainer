@@ -8,7 +8,7 @@
     width: 100%; 
     justify-content: space-between; 
     user-select: none; 
-    min-height: 100vh; 
+    min-height: 100dvh; 
     background-color: #0f172a; 
     color: #f8fafc; 
     font-family: 'Inter', sans-serif; 

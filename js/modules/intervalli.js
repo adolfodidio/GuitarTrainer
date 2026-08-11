@@ -69,12 +69,14 @@
         function nextQuestion() {
             if (autoAdvanceTimer) clearTimeout(autoAdvanceTimer);
 
-            const feedbackBox = document.getElementById('feedback-box');
-            const promptIdle = document.getElementById('prompt-idle');
+            const btnNext = document.getElementById('btn-next-q');
+            const prompt = document.getElementById('question-prompt');
             
-            feedbackBox.classList.add('hidden');
-            feedbackBox.className = 'w-full h-full rounded-xl flex items-center justify-between px-3 border transition-all text-xs sm:text-sm font-semibold hidden';
-            promptIdle.classList.remove('hidden');
+            if(btnNext) {
+                btnNext.classList.add('hidden');
+                btnNext.className = 'ti-btn-next hidden';
+            }
+            if(prompt) prompt.innerHTML = "Tocca l'intervallo esatto tra le 6 opzioni";
 
             const mode = document.getElementById('scale-mode').value;
             const isDiatonic = (mode === 'diatonic');
@@ -167,9 +169,8 @@
         }
 
         function answerQuestion(selectedOption, clickedBtn) {
-            const feedbackBox = document.getElementById('feedback-box');
-            const feedbackText = document.getElementById('feedback-text');
-            const promptIdle = document.getElementById('prompt-idle');
+            const btnNext = document.getElementById('btn-next-q');
+            const prompt = document.getElementById('question-prompt');
             
             total++;
             const isCorrect = selectedOption === currentQuestion.correctAnswer;
@@ -184,35 +185,37 @@
                 }
             });
 
-            promptIdle.classList.add('hidden');
-            feedbackBox.classList.remove('hidden');
+            if(btnNext) btnNext.classList.remove('hidden');
 
             if (isCorrect) {
                 score++;
-                feedbackBox.className = 'w-full h-full rounded-xl flex items-center justify-between px-3 border transition-all text-xs sm:text-sm font-semibold bg-emerald-950/90 border-emerald-500/70 text-emerald-200 shadow-md';
-                feedbackText.innerHTML = `
-                    <div class="flex items-center gap-2">
-                        <span class="text-lg">🎉</span>
-                        <div>
-                            <div class="font-extrabold text-emerald-300">Esatto! (${currentQuestion.correctAnswer})</div>
-                            <div class="text-[10px] text-emerald-400 font-mono">${currentQuestion.semitones} semitoni di distanza</div>
-                        </div>
-                    </div>
-                `;
+                if(btnNext) {
+                    btnNext.className = 'ti-btn-next correct';
+                    btnNext.innerHTML = '🎉 ESATTO - PROSSIMA ➔';
+                }
+                if(prompt) {
+                    prompt.innerHTML = `<span style="color: #34d399; font-weight: 700;">Corretto: ${currentQuestion.correctAnswer} (${currentQuestion.semitones} semitoni)</span>`;
+                }
+                
                 // Auto advance after 1.5s on correct
                 autoAdvanceTimer = setTimeout(() => {
                     nextQuestion();
                 }, 1500);
             } else {
-                feedbackBox.className = 'w-full h-full rounded-xl flex items-center justify-between px-3 border transition-all text-xs sm:text-sm font-semibold bg-rose-950/90 border-rose-500/70 text-rose-200 shadow-md';
-                let exp = `<div class="font-extrabold text-rose-300">Risposta: ${currentQuestion.correctAnswer}</div>`;
-                if (!currentQuestion.isAscending) {
-                    const invVal = 9 - getIntervalNumber(currentQuestion.correctAnswer);
-                    exp += `<div class="text-[10px] text-rose-300 font-mono font-normal">💡 Regola 9: Scendere di ${currentQuestion.correctAnswer} = Salire di ${invVal}ª</div>`;
-                } else {
-                    exp += `<div class="text-[10px] text-rose-300 font-mono font-normal">Distanza: ${currentQuestion.semitones} semitoni</div>`;
+                if(btnNext) {
+                    btnNext.className = 'ti-btn-next wrong';
+                    btnNext.innerHTML = '❌ SBAGLIATO - PROSSIMA ➔';
                 }
-                feedbackText.innerHTML = exp;
+                if(prompt) {
+                    let exp = `<span style="color: #fb7185; font-weight: 800;">Era: ${currentQuestion.correctAnswer}</span><br>`;
+                    if (!currentQuestion.isAscending) {
+                        const invVal = 9 - getIntervalNumber(currentQuestion.correctAnswer);
+                        exp += `<span style="font-size: 11px; color: #fca5a5; font-family: monospace;">💡 Regola 9: Scendere di ${currentQuestion.correctAnswer} = Salire di ${invVal}ª</span>`;
+                    } else {
+                        exp += `<span style="font-size: 11px; color: #fca5a5; font-family: monospace;">Distanza: ${currentQuestion.semitones} semitoni</span>`;
+                    }
+                    prompt.innerHTML = exp;
+                }
             }
 
             document.getElementById('score-val').innerText = score;

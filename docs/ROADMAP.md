@@ -8,19 +8,17 @@
 
 ## Fase 1: Refactoring Modulare & CSS System (Completata)
 *Obiettivo: Riorganizzare il progetto come previsto dal "Agentic Modular Engineering" isolando stili e logica in piccoli file gestibili per rispettare il Single Responsibility Principle.*
-- `[x]` Creazione del Design System Globale (estrazione dei colori, typography, e CSS condiviso in un `global.css` e variabili CSS).
-- `[x]` Separazione logica JS: estrarre la logica in file `.js` esterni per ogni modulo (es. `fretboard.js`, `intervalli.js`) per decongestionare i file HTML. (Parzialmente completato: `GuitarTrainer` e `TrainerIntervalli` rifattorizzati).
-- `[x]` Consolidamento UI: Assicurare che tutti i moduli condividano una singola navigazione (Header o Sidebar/Menu) e presentino uno stile coeso e premium (glassmorphism, animazioni fluide).
-- `[x]` Ottimizzazione Mobile: Revisionare le regole di layout mobile per garantire che tutti i moduli seguano il paradigma 100dvh e tap-target generosi.
-- `[x]` Completare il refactoring di `BarryHarris.html` e `PatMartino.html`.
+- [x] Creazione del Design System Globale (estrazione dei colori, typography, e CSS condiviso in un `global.css` e variabili CSS).
+- [x] Separazione logica JS: estrarre la logica in file `.js` esterni per ogni modulo (es. `fretboard.js`, `intervalli.js`) per decongestionare i file HTML. (Completato).
+- [x] Consolidamento UI: Standardizzazione dell'intestazione in tutti i moduli tramite design pulito (Material Design) e rimozione layout ridondanti (global-nav rimosso dai moduli single-screen).
+- [x] Ottimizzazione Mobile Definitiva: Implementazione della regola globale `100dvh` su tutti i moduli per impedire l'overflow dovuto alla barra degli indirizzi dei browser mobile. Rebranding da "Jazz Trainer" a "Guitar Trainer".
 
 ## Fase 1.5: Automazione & Testing (Completata)
 *Obiettivo: Prevenire regressioni e validare l'integrità del DOM e della logica client-side.*
 - [x] Installazione ambiente Node.js.
 - [x] Setup framework End-to-End (Playwright) nel `package.json`.
 - [x] Configurazione `playwright.config.js` per avviare `live-server` dinamicamente.
-- [x] Creazione primo test E2E (`intervalli.spec.js`) per validare il rendering del DOM e l'interazione dei pulsanti.
-
+- [x] Creazione primo test E2E (`intervalli.spec.js`) per validare il rendering del DOM, l'interazione dei pulsanti e la stabilità del layout Material Design con test passati con successo.
 
 ## Fase 2: Potenziamento Core - Trainer Intervalli & Fretboard
 - [ ] Integrazione completa API Audio (per rilevamento accurato in Fretboard Trainer).

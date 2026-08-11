@@ -19,7 +19,7 @@ test('Caricamento Trainer Intervalli e bottoni quiz', async ({ page }) => {
   const firstButton = buttons.nth(0);
   await firstButton.click();
 
-  const feedbackBox = page.locator('#feedback-box');
-  await expect(feedbackBox).not.toHaveClass(/hidden/);
-  await expect(feedbackBox).toBeVisible();
+  const nextButton = page.locator('#btn-next-q');
+  await expect(nextButton).not.toHaveClass(/hidden/);
+  await expect(nextButton).toBeVisible();
 });

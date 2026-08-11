@@ -1,4 +1,4 @@
-# Guitar & Jazz Trainer 🎸
+# Guitar Trainer 🎸
 
 Questa web app è una suite didattica interattiva per l'apprendimento della chitarra e dell'armonia jazz, sviluppata attraverso pair programming assistito da intelligenza artificiale (Gemini / Antigravity).
 

@@ -7,7 +7,7 @@ export function initGlobalNav() {
     const navHTML = `
         <nav id="global-nav" class="global-nav">
             <a href="index.html" class="global-nav-brand">
-                🎸 <span>Jazz Trainer</span>
+                🎸 <span>Guitar Trainer</span>
             </a>
             <div class="global-nav-links">
                 <a href="GuitarTrainer.html" class="nav-link ${location.pathname.includes('GuitarTrainer') ? 'active' : ''}" title="Fretboard">Fretboard</a>

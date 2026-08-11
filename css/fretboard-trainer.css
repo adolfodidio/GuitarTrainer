@@ -4,7 +4,7 @@ body.gt-body {
     overscroll-behavior: none;
     background-color: #111827; /* gray-900 */
     color: #ffffff;
-    min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
     align-items: center;

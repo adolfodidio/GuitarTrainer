@@ -19,9 +19,6 @@
         <h1 class="ti-title">
             <span>🎸</span> Trainer Intervalli
         </h1>
-        <div class="ti-badge">
-            JAZZ LAB
-        </div>
     </header>
 
     <!-- 2. SEGMENTED TAB NAVIGATION -->
@@ -95,21 +92,11 @@
                 <!-- Injected via JavaScript -->
             </div>
 
-            <!-- Feedback & Next Action Bar (Fixed Height) -->
+            <!-- Feedback & Next Action Bar (Full Width Button) -->
             <div class="ti-feedback-area">
-                
-                <!-- Active Feedback Display -->
-                <div id="feedback-box" class="ti-feedback-box hidden">
-                    <div id="feedback-text" class="ti-feedback-text"></div>
-                    <button id="btn-next-q" onclick="nextQuestion()" class="ti-btn-next">
-                        Prossima ➔
-                    </button>
-                </div>
-
-                <!-- Idle Prompt -->
-                <div id="prompt-idle" class="ti-idle-prompt">
-                    ⚡ Tocca un pulsante per verificare la distanza
-                </div>
+                <button id="btn-next-q" onclick="nextQuestion()" class="ti-btn-next hidden">
+                    PROSSIMA ➔
+                </button>
             </div>
 
         </section>
@@ -232,10 +219,6 @@ Corda    | Tasto -1   | STESSO TASTO | Tasto +1   | Tasto +2
     <script data-goatcounter="https://adolfodidio.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 
     <!-- SCRIPT APPLICATION -->
-    <script type="module">
-        import { initGlobalNav } from './js/components/nav.js';
-        initGlobalNav();
-    </script>
     <script src="js/modules/intervalli.js"></script>
 </body>
 </html>
