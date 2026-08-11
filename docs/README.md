@@ -20,5 +20,14 @@ Apri `index.html` in qualsiasi browser web moderno (desktop o mobile). Non richi
 
 ---
 
-*This app is an interactive educational suite for guitar fretboard visualization and jazz harmony, created with AI-assisted development. Open `index.html` in any browser to get started.*
+## 🧪 Testing (Sviluppo)
+Il progetto include una suite di test End-to-End basata su **Playwright**.
+Per eseguire i test (richiede Node.js):
+```bash
+npm install
+npm run test
+```
 
+---
+
+*This app is an interactive educational suite for guitar fretboard visualization and jazz harmony, created with AI-assisted development. Open `index.html` in any browser to get started.*

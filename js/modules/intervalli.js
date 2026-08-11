@@ -360,4 +360,3 @@
 
         // Initialize quiz on load
         nextQuestion();
-    </script>

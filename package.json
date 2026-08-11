@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "description": "Suite didattica interattiva per l'apprendimento della chitarra e dell'armonia jazz",
   "scripts": {
-    "start": "live-server"
+    "start": "live-server",
+    "test": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "live-server": "^1.2.2"
   },
   "author": "",

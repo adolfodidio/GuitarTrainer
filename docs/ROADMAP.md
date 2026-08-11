@@ -14,6 +14,14 @@
 - `[x]` Ottimizzazione Mobile: Revisionare le regole di layout mobile per garantire che tutti i moduli seguano il paradigma 100dvh e tap-target generosi.
 - `[x]` Completare il refactoring di `BarryHarris.html` e `PatMartino.html`.
 
+## Fase 1.5: Automazione & Testing (Completata)
+*Obiettivo: Prevenire regressioni e validare l'integrità del DOM e della logica client-side.*
+- [x] Installazione ambiente Node.js.
+- [x] Setup framework End-to-End (Playwright) nel `package.json`.
+- [x] Configurazione `playwright.config.js` per avviare `live-server` dinamicamente.
+- [x] Creazione primo test E2E (`intervalli.spec.js`) per validare il rendering del DOM e l'interazione dei pulsanti.
+
+
 ## Fase 2: Potenziamento Core - Trainer Intervalli & Fretboard
 - [ ] Integrazione completa API Audio (per rilevamento accurato in Fretboard Trainer).
 - [ ] Miglioramento della grafica vettoriale del manico in `TrainerIntervalli.html`.
